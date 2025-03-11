@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 
 import { SearchForm } from '@/components/search-form';
@@ -14,28 +16,26 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
+import { usePathname } from 'next/navigation';
 
 const data = {
   versions: ['UP04 - Salto', 'UP05 - Simões Filho', 'UP06 - Amparo'],
   navMain: [
     {
-      title: 'Listagem de Formulários',
-      url: '#',
+      title: 'Acompanhamento',
+      url: 'dashboard',
       items: [
         {
-          title: 'Formulário PTP',
-          url: 'dashboard/forms-ptp',
-          isActive: true,
+          title: 'Formulários PTP',
+          url: 'ptps',
         },
         {
-          title: 'Laudo CRM',
-          url: 'dashboard/laudos-crm',
-          isActive: false,
+          title: 'Laudos CRM',
+          url: 'laudos',
         },
         {
           title: 'Divergências',
-          url: 'dashboard/divergencias',
-          isActive: false,
+          url: 'divergencias',
         },
       ],
     },
@@ -154,6 +154,7 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -172,7 +173,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {item.items.map(item => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={item.isActive}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.includes(item.url)}
+                    >
                       <a href={item.url}>{item.title}</a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

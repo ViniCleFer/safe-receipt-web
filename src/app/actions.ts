@@ -31,5 +31,6 @@ export async function getUser() {
     // redirect('/error');
     return null;
   }
-  return data;
+
+  return data?.user;
 }

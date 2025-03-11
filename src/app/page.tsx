@@ -1,5 +1,5 @@
 import LoginPage from './login/page';
-import DashboardPage from './dashboard/layout';
+import DashboardPage from './dashboard/page';
 
 import { getSession } from './actions';
 

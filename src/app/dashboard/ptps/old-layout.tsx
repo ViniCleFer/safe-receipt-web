@@ -18,18 +18,28 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-// import { usePathname } from 'next/navigation';
-// import FormsPtpPage from './forms-ptp/page';
-// import LaudosCrmPage from './divergencias/page';
-// import DivergenciasPage from './laudos-crm/page';
+
 import { ModeToggle } from '@/components/ui/mode-toggle';
+// import { getUser } from '../actions';
+// import { logout } from './actions';
+import { useEffect, useState } from 'react';
+import { User } from '@supabase/supabase-js';
+import { getUser } from '@/app/actions';
+import { logout } from '../actions';
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const fullname = 'Vinicius Fernandes';
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (user === null) {
+      getUser().then(data => setUser(data));
+    }
+  }, [user]);
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -50,12 +60,12 @@ export default function RootLayout({
                   <Avatar className="h-8 w-8">
                     <AvatarImage
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/38184074.jpg-M4vCjTSSWVw5RwWvvmrxXBcNVU8MBU.jpeg"
-                      alt={fullname}
+                      alt={user?.user_metadata?.name}
                     />
                     <AvatarFallback>
-                      {fullname
+                      {user?.user_metadata?.name
                         .split(' ')
-                        .map(n => n[0])
+                        .map((n: string) => n[0])
                         .join('')}
                     </AvatarFallback>
                   </Avatar>
@@ -65,7 +75,7 @@ export default function RootLayout({
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
-                      {fullname}
+                      vinicius Fernandes
                     </p>
                     <p className="text-xs leading-none text-muted-foreground">
                       vinicius@email.com
@@ -76,7 +86,9 @@ export default function RootLayout({
                 <DropdownMenuItem asChild>
                   <Link href="/settings">Perfil</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>Sair</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => logout()}>
+                  Sair
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
