@@ -30,8 +30,6 @@ export async function getAllUsers() {
     .select()
     .order('created_at', { ascending: false });
 
-  console.log('getAllUsers', data, error, status, count);
-
   if (error) {
     console.error('Error getAllUsers', JSON.stringify(error, null, 2));
     return null;
