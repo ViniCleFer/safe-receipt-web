@@ -8,5 +8,5 @@ export default async function Home() {
 
   console.log('session', session);
 
-  return session ? <DashboardPage /> : <LoginPage />;
+  return session === null ? <LoginPage /> : <DashboardPage />;
 }

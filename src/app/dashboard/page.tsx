@@ -72,12 +72,16 @@ import {
   getAllUsers,
   getDivergencesRequest,
   getLaudosCrmRequest,
+  logout,
 } from './actions';
 import { FormPtp, TipoCodigoProduto } from '@/types/form-ptp';
 import LogoYpe from '@/assets/logo-ype.svg';
 import Image from 'next/image';
-import { User as SupabaseUser } from '@supabase/supabase-js';
-import { getUser } from '../actions';
+import {
+  Session as SupabaseSession,
+  User as SupabaseUser,
+} from '@supabase/supabase-js';
+import { getSession, getUser } from '../actions';
 import { getInitials } from '@/utils/get-iniciais';
 import { LaudoCrm } from '@/types/laudo-crm';
 import { tiposNaoConformidade as tiposNaoConformidadeList } from '@/utils/tiposNaoConformidade';
@@ -93,10 +97,28 @@ import { generateExcelDivergencias } from '@/utils/generate-excel-divergencias';
 export default function Dashboard() {
   const [activePage, setActivePage] = useState('forms-ptp');
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<SupabaseSession | null>(null);
+
+  React.useEffect(() => {
+    if (session !== null && user === null) {
+      getUser()
+        .then(data => setUser(data))
+        .catch(err => console.error('Page Error Get user', err));
+    }
+  }, [session]);
 
   React.useEffect(() => {
     if (user === null) {
-      getUser().then(data => setUser(data));
+      getSession()
+        .then(session => {
+          console.log('session', session);
+          if (session === null) {
+            logout();
+          }
+
+          setSession(session);
+        })
+        .catch(err => console.error('Page Error Get session', err));
     }
   }, [user]);
 
@@ -138,7 +160,10 @@ export default function Dashboard() {
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Perfil</span>
                   </DropdownMenuItem> */}
-                  <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                    onClick={() => logout()}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sair</span>
                   </DropdownMenuItem>

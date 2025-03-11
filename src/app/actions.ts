@@ -15,7 +15,7 @@ export async function getSession() {
     // redirect('/error');
     return null;
   }
-  return data;
+  return data?.session;
 }
 
 export async function getUser() {
@@ -27,7 +27,7 @@ export async function getUser() {
   const { data, error } = await supabase.auth.getUser();
 
   if (error) {
-    console.error('Error getSession', error);
+    console.error('Error getUser', error);
     // redirect('/error');
     return null;
   }
