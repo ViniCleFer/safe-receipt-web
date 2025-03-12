@@ -208,7 +208,10 @@ function DashboardSidebar({
   React.useEffect(() => {
     if (userSupabase && userSupabase !== null && user === null) {
       getUserByEmail(userSupabase.email!)
-        .then(data => setUser(data))
+        .then(data => {
+          console.log('data', data);
+          setUser(data);
+        })
         .catch(err => console.error('Page Error Get user', err));
     }
   }, [userSupabase, user]);
@@ -265,41 +268,68 @@ function DashboardSidebar({
           <Separator />
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Acompanhamento</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {user &&
-                  navItems
-                    ?.filter(item => item.permission === user?.profile)
-                    ?.map(item => (
-                      <SidebarMenuItem key={item.title}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <SidebarMenuButton
-                              tooltip={isCollapsed ? item.title : undefined}
-                              isActive={activePage === item.route}
-                              onClick={() => setActivePage(item.route)}
-                              className="cursor-pointer"
-                            >
-                              <item.icon className="h-4 w-4" />
-                              <span>{item.title}</span>
-                            </SidebarMenuButton>
-                          </TooltipTrigger>
-                          {isCollapsed && (
-                            <TooltipContent
-                              side="right"
-                              className="cursor-pointer"
-                            >
-                              {item.title}
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </SidebarMenuItem>
-                    ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {user && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Acompanhamento</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {user?.profile === TipoPerfil.ADMIN
+                    ? navItems?.map(item => (
+                        <SidebarMenuItem key={item.title}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <SidebarMenuButton
+                                tooltip={isCollapsed ? item.title : undefined}
+                                isActive={activePage === item.route}
+                                onClick={() => setActivePage(item.route)}
+                                className="cursor-pointer"
+                              >
+                                <item.icon className="h-4 w-4" />
+                                <span>{item.title}</span>
+                              </SidebarMenuButton>
+                            </TooltipTrigger>
+                            {isCollapsed && (
+                              <TooltipContent
+                                side="right"
+                                className="cursor-pointer"
+                              >
+                                {item.title}
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </SidebarMenuItem>
+                      ))
+                    : navItems
+                        ?.filter(item => item.permission === TipoPerfil.MEMBER)
+                        ?.map(item => (
+                          <SidebarMenuItem key={item.title}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <SidebarMenuButton
+                                  tooltip={isCollapsed ? item.title : undefined}
+                                  isActive={activePage === item.route}
+                                  onClick={() => setActivePage(item.route)}
+                                  className="cursor-pointer"
+                                >
+                                  <item.icon className="h-4 w-4" />
+                                  <span>{item.title}</span>
+                                </SidebarMenuButton>
+                              </TooltipTrigger>
+                              {isCollapsed && (
+                                <TooltipContent
+                                  side="right"
+                                  className="cursor-pointer"
+                                >
+                                  {item.title}
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          </SidebarMenuItem>
+                        ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
         </SidebarContent>
         {/* <SidebarFooter>
           <div className="flex items-center justify-between px-4 py-2">

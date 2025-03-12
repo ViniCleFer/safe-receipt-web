@@ -60,7 +60,7 @@ export function LoginForm({ className, signIn, ...props }: LoginFormProps) {
           <Input
             id="email"
             type="email"
-            placeholder="m@example.com"
+            placeholder="Digite seu e-mail"
             {...register('email')}
           />
           <ErrorMessage errors={errors} name="email" />
@@ -68,31 +68,32 @@ export function LoginForm({ className, signIn, ...props }: LoginFormProps) {
         <div className="grid gap-2">
           <div className="flex items-center">
             <Label htmlFor="password">Senha</Label>
-            <a
+            {/* <a
               href="#"
               className="ml-auto text-sm underline-offset-4 hover:underline"
             >
               Esqueceu sua senha?
-            </a>
+            </a> */}
           </div>
           <Input
             id="password"
             type="password"
+            placeholder="Digite sua senha"
             required
             {...register('password')}
           />
           <ErrorMessage errors={errors} name="password" />
         </div>
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full cursor-pointer">
           Entrar
         </Button>
       </div>
-      <div className="text-center text-sm">
+      {/* <div className="text-center text-sm">
         Não tem uma conta?{' '}
         <a href="#" className="underline underline-offset-4">
           Cadastre-se
         </a>
-      </div>
+      </div> */}
     </form>
   );
 }
