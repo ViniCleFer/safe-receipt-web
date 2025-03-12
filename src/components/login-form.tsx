@@ -8,6 +8,8 @@ import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useState } from 'react';
+import { Spinner } from './ui/spinner';
 // import { login } from '@/app/login/actions';
 
 interface FormData {
@@ -28,6 +30,8 @@ const formValidation = () => {
 };
 
 export function LoginForm({ className, signIn, ...props }: LoginFormProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
   const {
     formState: { errors },
     register,
@@ -40,9 +44,16 @@ export function LoginForm({ className, signIn, ...props }: LoginFormProps) {
     },
   });
 
-  function handleLogin(data: FormData) {
+  async function handleLogin(data: FormData) {
     console.log(data);
-    signIn(data);
+    setIsLoading(true);
+    try {
+      await signIn(data);
+    } catch (error) {
+      console.error('Error logging in', error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -84,7 +95,12 @@ export function LoginForm({ className, signIn, ...props }: LoginFormProps) {
           />
           <ErrorMessage errors={errors} name="password" />
         </div>
-        <Button type="submit" className="w-full cursor-pointer">
+        <Button
+          type="submit"
+          className="w-full cursor-pointer"
+          disabled={isLoading}
+        >
+          {isLoading && <Spinner size="small" className="text-white" />}
           Entrar
         </Button>
       </div>

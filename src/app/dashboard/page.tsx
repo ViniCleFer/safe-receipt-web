@@ -14,6 +14,7 @@ import {
   Users,
   ListCheck,
   Sheet,
+  ClipboardList,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -70,6 +71,7 @@ import { useState } from 'react';
 import {
   getAllFormsPtp,
   getAllUsers,
+  getCartasControleRequest,
   getDivergencesRequest,
   getLaudosCrmRequest,
   getUserByEmail,
@@ -95,11 +97,15 @@ import { generateExcelLaudosCrm } from '@/utils/generate-excel-laudos-crm';
 import { generateExcelDivergencias } from '@/utils/generate-excel-divergencias';
 import { Spinner } from '@/components/ui/spinner';
 import { getTipoEspecificacao } from '@/utils/get-tipo-especificacao';
+import { CartaControle } from '@/types/carta-controle';
+import { generateExcelCartasControle } from '@/utils/generate-excel-cartas-controle';
+import { listaTurnos } from '@/utils/listaTurnos';
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState('forms-ptp');
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<SupabaseSession | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   React.useEffect(() => {
     if (session !== null && user === null) {
@@ -123,6 +129,17 @@ export default function Dashboard() {
         .catch(err => console.error('Page Error Get session', err));
     }
   }, [user]);
+
+  async function handleLogout() {
+    setIsLoading(true);
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Error logout', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -164,11 +181,15 @@ export default function Dashboard() {
                     <span>Perfil</span>
                   </DropdownMenuItem> */}
                   <DropdownMenuItem
-                    className="cursor-pointer text-destructive focus:text-destructive"
-                    onClick={() => logout()}
+                    className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                    onClick={handleLogout}
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sair</span>
+                    {isLoading ? (
+                      <Spinner size="small" className="text-destructive" />
+                    ) : (
+                      <LogOut className="text-destructive mr-2 h-4 w-4" />
+                    )}
+                    <span className="text-destructive">Sair</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -178,6 +199,7 @@ export default function Dashboard() {
             {activePage === 'forms-ptp' && <FormPtpContent />}
             {activePage === 'laudos-crm' && <LaudoCrmContent />}
             {activePage === 'divergencias' && <DivergenciasContent />}
+            {activePage === 'cartas-controle' && <CartasControleContent />}
             {activePage === 'usuarios' && <UsersContent />}
             {activePage === 'Analytics' && <AnalyticsContent />}
             {activePage === 'Orders' && <OrdersContent />}
@@ -233,6 +255,12 @@ function DashboardSidebar({
       title: 'Divergências',
       icon: Layers,
       route: 'divergencias',
+      permission: TipoPerfil.MEMBER,
+    },
+    {
+      title: 'Carta Controle',
+      icon: ClipboardList,
+      route: 'cartas-controle',
       permission: TipoPerfil.MEMBER,
     },
     {
@@ -1633,6 +1661,254 @@ function DivergenciasContent() {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Dashboard page content
+function CartasControleContent() {
+  const [allProducts, setAllProducts] = React.useState<CartaControle[]>([]);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [itemsPerPage, setItemsPerPage] = React.useState(10);
+  const [isLoadingPtp, setIsLoadingPtp] = React.useState(false);
+
+  React.useEffect(() => {
+    getCartasControleRequest()
+      .then(data => {
+        console.log('teste', data?.data);
+        const ok = data !== null ? data?.data : [];
+        setAllProducts([...ok]);
+      })
+      .catch(err => {
+        console.log('erro', err);
+      });
+  }, []);
+
+  const filteredProducts = React.useMemo(() => {
+    return allProducts?.filter(
+      product =>
+        product?.conferente
+          ?.toLowerCase()
+          ?.includes(searchQuery?.toLowerCase()) ||
+        product?.turno?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
+        product?.documentoTransporte
+          ?.toLowerCase()
+          ?.includes(searchQuery?.toLowerCase()) ||
+        product?.remessa?.toLowerCase()?.includes(searchQuery?.toLowerCase()),
+    );
+  }, [searchQuery, allProducts]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // Handle page change
+  const handlePageChange = (page: any) => {
+    setCurrentPage(page);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: any) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const handleGeneratePtpExcel = async () => {
+    try {
+      setIsLoadingPtp(true);
+
+      return await generateExcelCartasControle();
+    } catch (error) {
+      console.log('error', error);
+      return;
+    } finally {
+      setIsLoadingPtp(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Cartas Controle</h2>
+          <p className="text-muted-foreground">
+            Gerencie e monitore as cartas controle
+          </p>
+        </div>
+        <div className="flex items-center gap-2 w-full md:w-1/3">
+          <Input
+            placeholder="Digite um conferente, nota fiscal, UP"
+            value={searchQuery}
+            onChange={e => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // Reset to first page on search
+            }}
+            className="w-full"
+          />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="cursor-pointer"
+                onClick={() => handleGeneratePtpExcel()}
+                disabled={isLoadingPtp}
+              >
+                {isLoadingPtp ? (
+                  <Spinner size="small" className="text-white" />
+                ) : (
+                  <Sheet className="h-5 w-5" />
+                )}
+                Gerar Relatório
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="center">
+              Relatório em Excel
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Listagem de itens</CardTitle>
+          <CardDescription>
+            Mostrando {startIndex + 1}-
+            {Math.min(endIndex, filteredProducts?.length)} de{' '}
+            {filteredProducts?.length} cartas controle
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <div className="grid grid-cols-7 border-b bg-muted/50 p-3 font-medium">
+              {/* <div>ID</div> */}
+              <div>Conferente</div>
+              <div>Turno</div>
+              <div>Remessa</div>
+              <div>Doc. Transporte (DT)</div>
+              <div>Doca</div>
+              <div>Capacidade Veículo</div>
+              <div>Data Recebimento</div>
+            </div>
+            {currentProducts?.length > 0 ? (
+              currentProducts?.map((product: CartaControle) => (
+                <div key={product.id} className="grid grid-cols-7 border-b p-3">
+                  {/* <div>#{product?.id?.substring(0, 8)}</div> */}
+                  <div>{product?.conferente}</div>
+                  <div>
+                    {listaTurnos.find(t => t.value === product.turno)?.label}
+                  </div>
+                  <div>{product?.remessa}</div>
+                  <div>{product?.documentoTransporte}</div>
+                  <div>{product?.doca}</div>
+                  <div>{product?.capacidadeVeiculo}</div>
+                  <div>
+                    {dayjs(product?.dataIdentificacao).format('DD/MM/YYYY')}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-4 text-center text-muted-foreground">
+                Nenhuma carta controle encontrada
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">Itens por página</p>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={handleItemsPerPageChange}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={itemsPerPage} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="15">15</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 -ml-2" />
+                <span className="sr-only">Primeira</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">Anterior</span>
+              </Button>
+
+              <div className="flex items-center gap-1 mx-2">
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  let pageNumber;
+
+                  // Logic to show pages around current page
+                  if (totalPages <= 5) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNumber = totalPages - 4 + i;
+                  } else {
+                    pageNumber = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNumber}
+                      variant={
+                        currentPage === pageNumber ? 'default' : 'outline'
+                      }
+                      size="icon"
+                      onClick={() => handlePageChange(pageNumber)}
+                      className="h-8 w-8"
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+                <span className="sr-only">Próxima</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 -ml-2" />
+                <span className="sr-only">Última</span>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

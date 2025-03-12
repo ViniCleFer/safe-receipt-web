@@ -302,3 +302,55 @@ export async function getDetailsDivergenceByIdRequest(idDivergencia: string) {
 
   return { data, status };
 }
+
+export async function getCartasControleRequest() {
+  const supabase = await createClient();
+
+  const { data, error, status } = await supabase
+    .from('cartas-controle')
+    .select()
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error(
+      'Error getCartasControleRequest',
+      JSON.stringify(error, null, 2),
+    );
+    return null;
+  }
+
+  return { data, status };
+}
+
+export async function getCartasControleByIdRequest(cartaControleId: string) {
+  const supabase = await createClient();
+
+  const { data, error, status, statusText, count } = await supabase
+    .from('cartas-controle')
+    .select()
+    .eq('id', cartaControleId);
+
+  if (error) {
+    console.error(
+      'Error getCartasControleByIdRequest',
+      JSON.stringify(error, null, 2),
+    );
+    return null;
+  }
+
+  console.log(
+    'Success getCartasControleByIdRequest',
+    JSON.stringify(
+      {
+        data,
+        status,
+        statusText,
+        count,
+      },
+      null,
+      2,
+    ),
+  );
+
+  return { data, status };
+}
