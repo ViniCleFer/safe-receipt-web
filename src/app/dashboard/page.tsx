@@ -72,9 +72,10 @@ import {
   getAllUsers,
   getDivergencesRequest,
   getLaudosCrmRequest,
+  getUserByEmail,
   logout,
 } from './actions';
-import { FormPtp, TipoCodigoProduto } from '@/types/form-ptp';
+import { FormPtp } from '@/types/form-ptp';
 import LogoYpe from '@/assets/logo-ype.svg';
 import Image from 'next/image';
 import {
@@ -85,7 +86,6 @@ import { getSession, getUser } from '../actions';
 import { getInitials } from '@/utils/get-iniciais';
 import { LaudoCrm } from '@/types/laudo-crm';
 import { tiposNaoConformidade as tiposNaoConformidadeList } from '@/utils/tiposNaoConformidade';
-import { getTipoCodigoProduto } from '@/utils/get-tipo-cod-produto';
 import { Divergencia, TipoDivergencia } from '@/types/divergencia';
 import { TipoPerfil, User } from '@/types/user';
 import { getTipoPerfil } from '@/utils/get-tipo-perfil';
@@ -93,6 +93,8 @@ import { Switch } from '@/components/ui/switch';
 import { generateExcelFormsPtp } from '@/utils/generate-excel-forms-ptp';
 import { generateExcelLaudosCrm } from '@/utils/generate-excel-laudos-crm';
 import { generateExcelDivergencias } from '@/utils/generate-excel-divergencias';
+import { Spinner } from '@/components/ui/spinner';
+import { getTipoEspecificacao } from '@/utils/get-tipo-especificacao';
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState('forms-ptp');
@@ -128,10 +130,11 @@ export default function Dashboard() {
         <DashboardSidebar
           activePage={activePage}
           setActivePage={setActivePage}
+          user={user}
         />
         <SidebarInset>
           <header className="sticky top-0 flex h-14 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
-            <SidebarTrigger />
+            <SidebarTrigger className="cursor-pointer" />
             <div className="flex items-center gap-4">
               <ModeToggle />
               <DropdownMenu>
@@ -191,18 +194,50 @@ export default function Dashboard() {
 function DashboardSidebar({
   activePage,
   setActivePage,
+  user: userSupabase,
 }: {
   activePage: any;
   setActivePage: (page: any) => void;
+  user: SupabaseUser | null;
 }) {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
 
+  const [user, setUser] = useState<User | null>(null);
+
+  React.useEffect(() => {
+    if (userSupabase && userSupabase !== null && user === null) {
+      getUserByEmail(userSupabase.email!)
+        .then(data => setUser(data))
+        .catch(err => console.error('Page Error Get user', err));
+    }
+  }, [userSupabase, user]);
+
   const navItems = [
-    { title: 'Formulários PTP', icon: ListCheck, route: 'forms-ptp' },
-    { title: 'Laudos CRM', icon: LayoutDashboard, route: 'laudos-crm' },
-    { title: 'Divergências', icon: Layers, route: 'divergencias' },
-    { title: 'Usuários', icon: Users, route: 'usuarios' },
+    {
+      title: 'Formulários PTP',
+      icon: ListCheck,
+      route: 'forms-ptp',
+      permission: TipoPerfil.MEMBER,
+    },
+    {
+      title: 'Laudos CRM',
+      icon: LayoutDashboard,
+      route: 'laudos-crm',
+      permission: TipoPerfil.MEMBER,
+    },
+    {
+      title: 'Divergências',
+      icon: Layers,
+      route: 'divergencias',
+      permission: TipoPerfil.MEMBER,
+    },
+    {
+      title: 'Usuários',
+      icon: Users,
+      route: 'usuarios',
+      permission: TipoPerfil.ADMIN,
+    },
     // { title: 'Analytics', icon: BarChart3 },
     // { title: 'Orders', icon: Layers },
     // { title: 'Calendar', icon: Calendar },
@@ -234,27 +269,34 @@ function DashboardSidebar({
             <SidebarGroupLabel>Acompanhamento</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {navItems.map(item => (
-                  <SidebarMenuItem key={item.title}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton
-                          tooltip={isCollapsed ? item.title : undefined}
-                          isActive={activePage === item.route}
-                          onClick={() => setActivePage(item.route)}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </SidebarMenuButton>
-                      </TooltipTrigger>
-                      {isCollapsed && (
-                        <TooltipContent side="right">
-                          {item.title}
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
-                  </SidebarMenuItem>
-                ))}
+                {user &&
+                  navItems
+                    ?.filter(item => item.permission === user?.profile)
+                    ?.map(item => (
+                      <SidebarMenuItem key={item.title}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <SidebarMenuButton
+                              tooltip={isCollapsed ? item.title : undefined}
+                              isActive={activePage === item.route}
+                              onClick={() => setActivePage(item.route)}
+                              className="cursor-pointer"
+                            >
+                              <item.icon className="h-4 w-4" />
+                              <span>{item.title}</span>
+                            </SidebarMenuButton>
+                          </TooltipTrigger>
+                          {isCollapsed && (
+                            <TooltipContent
+                              side="right"
+                              className="cursor-pointer"
+                            >
+                              {item.title}
+                            </TooltipContent>
+                          )}
+                        </Tooltip>
+                      </SidebarMenuItem>
+                    ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -289,157 +331,11 @@ function DashboardSidebar({
 
 // Dashboard page content
 function FormPtpContent() {
-  // const allProducts = [
-  //   {
-  //     id: 1,
-  //     name: 'Product A',
-  //     category: 'Electronics',
-  //     price: '$299.99',
-  //     stock: 45,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 2,
-  //     name: 'Product B',
-  //     category: 'Furniture',
-  //     price: '$599.99',
-  //     stock: 12,
-  //     status: 'Low Stock',
-  //   },
-  //   {
-  //     id: 3,
-  //     name: 'Product C',
-  //     category: 'Clothing',
-  //     price: '$49.99',
-  //     stock: 89,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 4,
-  //     name: 'Product D',
-  //     category: 'Electronics',
-  //     price: '$199.99',
-  //     stock: 23,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 5,
-  //     name: 'Product E',
-  //     category: 'Home Goods',
-  //     price: '$79.99',
-  //     stock: 56,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 6,
-  //     name: 'Product F',
-  //     category: 'Clothing',
-  //     price: '$29.99',
-  //     stock: 120,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 7,
-  //     name: 'Product G',
-  //     category: 'Electronics',
-  //     price: '$349.99',
-  //     stock: 8,
-  //     status: 'Low Stock',
-  //   },
-  //   {
-  //     id: 8,
-  //     name: 'Product H',
-  //     category: 'Furniture',
-  //     price: '$899.99',
-  //     stock: 5,
-  //     status: 'Low Stock',
-  //   },
-  //   {
-  //     id: 9,
-  //     name: 'Product I',
-  //     category: 'Clothing',
-  //     price: '$59.99',
-  //     stock: 67,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 10,
-  //     name: 'Product J',
-  //     category: 'Electronics',
-  //     price: '$249.99',
-  //     stock: 0,
-  //     status: 'Out of Stock',
-  //   },
-  //   {
-  //     id: 11,
-  //     name: 'Product K',
-  //     category: 'Home Goods',
-  //     price: '$129.99',
-  //     stock: 34,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 12,
-  //     name: 'Product L',
-  //     category: 'Clothing',
-  //     price: '$39.99',
-  //     stock: 0,
-  //     status: 'Out of Stock',
-  //   },
-  //   {
-  //     id: 13,
-  //     name: 'Product M',
-  //     category: 'Electronics',
-  //     price: '$399.99',
-  //     stock: 15,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 14,
-  //     name: 'Product N',
-  //     category: 'Furniture',
-  //     price: '$799.99',
-  //     stock: 3,
-  //     status: 'Low Stock',
-  //   },
-  //   {
-  //     id: 15,
-  //     name: 'Product O',
-  //     category: 'Clothing',
-  //     price: '$69.99',
-  //     stock: 45,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 16,
-  //     name: 'Product P',
-  //     category: 'Electronics',
-  //     price: '$279.99',
-  //     stock: 0,
-  //     status: 'Out of Stock',
-  //   },
-  //   {
-  //     id: 17,
-  //     name: 'Product Q',
-  //     category: 'Home Goods',
-  //     price: '$149.99',
-  //     stock: 22,
-  //     status: 'In Stock',
-  //   },
-  //   {
-  //     id: 18,
-  //     name: 'Product R',
-  //     category: 'Clothing',
-  //     price: '$49.99',
-  //     stock: 78,
-  //     status: 'In Stock',
-  //   },
-  // ];
-
   const [allProducts, setAllProducts] = React.useState<FormPtp[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
+  const [isLoadingPtp, setIsLoadingPtp] = React.useState(false);
 
   React.useEffect(() => {
     getAllFormsPtp()
@@ -483,6 +379,19 @@ function FormPtpContent() {
     setCurrentPage(1); // Reset to first page when changing items per page
   };
 
+  const handleGeneratePtpExcel = async () => {
+    try {
+      setIsLoadingPtp(true);
+
+      return await generateExcelFormsPtp();
+    } catch (error) {
+      console.log('error', error);
+      return;
+    } finally {
+      setIsLoadingPtp(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -504,8 +413,16 @@ function FormPtpContent() {
           />
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button className="pointer" onClick={generateExcelFormsPtp}>
-                <Sheet className="h-5 w-5" />
+              <Button
+                className="cursor-pointer"
+                onClick={() => handleGeneratePtpExcel()}
+                disabled={isLoadingPtp}
+              >
+                {isLoadingPtp ? (
+                  <Spinner size="small" className="text-white" />
+                ) : (
+                  <Sheet className="h-5 w-5" />
+                )}
                 Gerar Relatório
               </Button>
             </TooltipTrigger>
@@ -534,7 +451,7 @@ function FormPtpContent() {
               <div>UP Origem</div>
               <div>Qtd. Analisada</div>
               <div>Data Recebimento</div>
-              <div>Tipo Cód. Produto</div>
+              <div>Tipo</div>
             </div>
             {currentProducts?.length > 0 ? (
               currentProducts?.map((product: FormPtp) => (
@@ -546,17 +463,8 @@ function FormPtpContent() {
                   <div>{product?.qtdAnalisada}</div>
                   <div>{dayjs(product?.dataExecucao).format('DD/MM/YYYY')}</div>
                   <div>
-                    <Badge
-                      variant={
-                        product?.tipoCodigoProduto === TipoCodigoProduto.MISTO
-                          ? 'outline'
-                          : product?.tipoCodigoProduto ===
-                            TipoCodigoProduto.EXCLUSIVO
-                          ? 'default'
-                          : 'destructive'
-                      }
-                    >
-                      {getTipoCodigoProduto(product?.tipoCodigoProduto)}
+                    <Badge variant="default">
+                      {getTipoEspecificacao(product?.tipoEspecificacao)}
                     </Badge>
                   </div>
                 </div>
@@ -672,6 +580,7 @@ function LaudoCrmContent() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
+  const [isLoadingLaudo, setIsLoadingLaudo] = React.useState(false);
 
   React.useEffect(() => {
     getLaudosCrmRequest()
@@ -779,6 +688,19 @@ function LaudoCrmContent() {
     setCurrentPage(1); // Reset to first page when changing items per page
   };
 
+  const handleGenerateLaudoExcel = async () => {
+    try {
+      setIsLoadingLaudo(true);
+
+      return await generateExcelLaudosCrm();
+    } catch (error) {
+      console.log('error', error);
+      return;
+    } finally {
+      setIsLoadingLaudo(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -800,8 +722,16 @@ function LaudoCrmContent() {
           />
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button className="pointer" onClick={generateExcelLaudosCrm}>
-                <Sheet className="h-5 w-5" />
+              <Button
+                className="cursor-pointer"
+                onClick={() => handleGenerateLaudoExcel()}
+                disabled={isLoadingLaudo}
+              >
+                {isLoadingLaudo ? (
+                  <Spinner size="small" className="text-white" />
+                ) : (
+                  <Sheet className="h-5 w-5" />
+                )}
                 Gerar Relatório
               </Button>
             </TooltipTrigger>
@@ -985,6 +915,7 @@ function DivergenciasContent() {
   const [searchQueryInversao, setSearchQueryInversao] = React.useState('');
   const [currentPageInversao, setCurrentPageInversao] = React.useState(1);
   const [itemsPerPageInversao, setItemsPerPageInversao] = React.useState(10);
+  const [isLoadingDivergencia, setIsLoadingDivergencia] = React.useState(false);
 
   React.useEffect(() => {
     getDivergencesRequest()
@@ -1120,6 +1051,19 @@ function DivergenciasContent() {
     setCurrentPageInversao(1); // Reset to first page when changing items per page
   };
 
+  const handleGenerateDivergenciaExcel = async () => {
+    try {
+      setIsLoadingDivergencia(true);
+
+      return await generateExcelDivergencias();
+    } catch (error) {
+      console.log('error', error);
+      return;
+    } finally {
+      setIsLoadingDivergencia(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center w-full">
@@ -1132,8 +1076,16 @@ function DivergenciasContent() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button className="pointer" onClick={generateExcelDivergencias}>
-              <Sheet className="h-5 w-5" />
+            <Button
+              className="cursor-pointer"
+              onClick={() => handleGenerateDivergenciaExcel()}
+              disabled={isLoadingDivergencia}
+            >
+              {isLoadingDivergencia ? (
+                <Spinner size="small" className="text-white" />
+              ) : (
+                <Sheet className="h-5 w-5" />
+              )}
               Gerar Relatório
             </Button>
           </TooltipTrigger>

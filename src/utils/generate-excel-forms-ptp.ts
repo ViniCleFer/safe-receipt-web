@@ -7,6 +7,7 @@ import { wordNormalize } from './wordNormalize';
 import { fileDownload } from '@/utils/fileDownload';
 import { tiposNaoConformidade } from './tiposNaoConformidade';
 import { getAllFormsPtpAnswerWithFormPtpRelationship } from '@/app/dashboard/actions';
+import { getTipoEspecificacao } from './get-tipo-especificacao';
 
 export async function generateExcelFormsPtp(): Promise<void | null> {
   const formsPtpAnswerWithFormPtp =
@@ -21,6 +22,7 @@ export async function generateExcelFormsPtp(): Promise<void | null> {
 
   const formsPtp = formsPtpAnswerWithFormPtp?.data?.map((item: any) => ({
     'ID PTP': item.form_ptp_id,
+    'Tipo PTP': getTipoEspecificacao(item?.form_ptp?.tipoEspecificacao),
     'Nota Fiscal': item?.form_ptp?.notaFiscal,
     'Data de Recebimento': dayjs(item?.form_ptp?.dataExecucao).format(
       'DD/MM/YYYY',

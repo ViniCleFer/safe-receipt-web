@@ -38,6 +38,22 @@ export async function getAllUsers() {
   return { data, count, status };
 }
 
+export async function getUserByEmail(email: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await await supabase
+    .from('users')
+    .select()
+    .eq('email', email);
+
+  if (error) {
+    console.error('Error getUserByEmail', JSON.stringify(error, null, 2));
+    return null;
+  }
+
+  return data[0];
+}
+
 export async function getAllFormsPtp() {
   const supabase = await createClient();
 

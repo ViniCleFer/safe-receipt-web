@@ -1,15 +1,5 @@
-import { FormPtp } from './form-ptp';
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// export enum Enunciado {
-//   NUM_CAMADAS = 'NUM_CAMADAS',
-//   LIMPEZA = 'LIMPEZA',
-//   PRESENCA_DATA_FABRICACAO = 'PRESENCA_DATA_FABRICACAO',
-//   INTEGRIDADE_PALLET = 'INTEGRIDADE_PALLET',
-//   AUSENCIA_VAZAMENTO = 'AUSENCIA_VAZAMENTO',
-//   STRECH_FORRACAO = 'STRECH_FORRACAO',
-//   ETIQUETA_UC = 'ETIQUETA_UC',
-// }
+import { FormPtp, TipoEspecificacao } from './form-ptp';
 
 export enum GrupoEnunciado {
   PALETE = 'PALETE',
@@ -24,6 +14,7 @@ export interface Enunciado {
   grupo: GrupoEnunciado;
   isChecked: boolean;
   opcoesNaoConformidades: string[];
+  tipoEspecificacao: TipoEspecificacao;
   created_at: Date;
   updated_at: Date;
   canceled_at: Date | null;
@@ -40,6 +31,7 @@ export interface FormPtpAnswer {
   qtdPalletsNaoConforme: number;
   qtdCaixasNaoConforme: number;
   necessitaCrm: boolean;
+  tipoEspecificacao: TipoEspecificacao;
   created_at: Date;
   updated_at: Date;
   canceled_at: Date | null;

@@ -8,6 +8,12 @@ export enum TipoCodigoProduto {
   EXCLUSIVO = 'EXCLUSIVO',
 }
 
+export enum TipoEspecificacao {
+  RECEBIMENTO = 'RECEBIMENTO',
+  SEPARACAO_MONTAGEM = 'SEPARACAO_MONTAGEM',
+  ARMAZENAMENTO = 'ARMAZENAMENTO',
+}
+
 export interface FormPtp {
   id: string;
   dataExecucao: Date;
@@ -16,6 +22,7 @@ export interface FormPtp {
   opcaoUp: string;
   qtdAnalisada: number;
   tipoCodigoProduto: TipoCodigoProduto;
+  tipoEspecificacao: TipoEspecificacao;
   status: FormPtpStatus;
   created_at: Date;
   updated_at: Date;
