@@ -461,7 +461,7 @@ function FormPtpContent() {
         </div>
         <div className="flex items-center gap-2 w-full md:w-1/3">
           <Input
-            placeholder="Digite um conferente, nota fiscal, UP"
+            placeholder="Digite um conferente/técnico, nota fiscal, UP"
             value={searchQuery}
             onChange={e => {
               setSearchQuery(e.target.value);
@@ -504,7 +504,7 @@ function FormPtpContent() {
           <div className="rounded-md border">
             <div className="grid grid-cols-6 border-b bg-muted/50 p-3 font-medium">
               {/* <div>ID</div> */}
-              <div>Conferente</div>
+              <div>Conferente/Técnico</div>
               <div>Nota Fiscal</div>
               <div>UP Origem</div>
               <div>Qtd. Analisada</div>
@@ -516,9 +516,11 @@ function FormPtpContent() {
                 <div key={product.id} className="grid grid-cols-6 border-b p-3">
                   {/* <div>#{product?.id?.substring(0, 8)}</div> */}
                   <div>{product?.conferente}</div>
-                  <div>{product?.notaFiscal}</div>
-                  <div>{product?.opcaoUp}</div>
-                  <div>{product?.qtdAnalisada}</div>
+                  <div>{product?.notaFiscal ? product?.notaFiscal : 'N/A'}</div>
+                  <div>{product?.opcaoUp ? product?.opcaoUp : 'N/A'}</div>
+                  <div>
+                    {product?.qtdAnalisada ? product?.qtdAnalisada : 'N/A'}
+                  </div>
                   <div>{dayjs(product?.dataExecucao).format('DD/MM/YYYY')}</div>
                   <div>
                     <Badge variant="default">
@@ -1740,7 +1742,7 @@ function CartasControleContent() {
         </div>
         <div className="flex items-center gap-2 w-full md:w-1/3">
           <Input
-            placeholder="Digite um conferente, nota fiscal, UP"
+            placeholder="Digite um conferente/técnico, nota fiscal, UP"
             value={searchQuery}
             onChange={e => {
               setSearchQuery(e.target.value);
@@ -1783,7 +1785,7 @@ function CartasControleContent() {
           <div className="rounded-md border">
             <div className="grid grid-cols-7 border-b bg-muted/50 p-3 font-medium">
               {/* <div>ID</div> */}
-              <div>Conferente</div>
+              <div>Conferente/Técnico</div>
               <div>Turno</div>
               <div>Remessa</div>
               <div>Doc. Transporte (DT)</div>
@@ -1969,7 +1971,7 @@ function UsersContent() {
         </div>
         <div className="w-full md:w-1/3">
           <Input
-            placeholder="Digite um conferente, nota fiscal, UP"
+            placeholder="Digite um conferente/técnico, nota fiscal, UP"
             value={searchQuery}
             onChange={e => {
               setSearchQuery(e.target.value);

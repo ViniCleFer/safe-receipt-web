@@ -27,7 +27,7 @@ export async function generateExcelFormsPtp(): Promise<void | null> {
     'Data de Recebimento': dayjs(item?.form_ptp?.dataExecucao).format(
       'DD/MM/YYYY',
     ),
-    Conferente: item?.form_ptp?.conferente,
+    'Conferente/Técnico': item?.form_ptp?.conferente,
     'Opção UP': item?.form_ptp?.opcaoUp,
     'Qtd. Analisada': item?.form_ptp?.qtdAnalisada,
     Enunciado: item?.enunciado?.descricao,

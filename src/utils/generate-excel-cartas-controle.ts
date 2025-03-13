@@ -24,7 +24,7 @@ export async function generateExcelCartasControle(): Promise<void | null> {
       Turno: listaTurnos?.find(t => t.value === item.turno)?.label,
       'Documento Transporte': item?.documentoTransporte,
       Remessa: item?.remessa,
-      Conferente: item?.conferente,
+      'Conferente/Técnico': item?.conferente,
       Doca: item?.doca,
       'Capacidade Veículo': item?.capacidadeVeiculo,
       Observações: item?.observacoes,

@@ -25,7 +25,7 @@ export async function generateExcelLaudosCrm(): Promise<void | null> {
     'Data de Identificação': dayjs(item?.dataIdentificacao).format(
       'DD/MM/YYYY',
     ),
-    Conferente: item?.conferente,
+    'Conferente/Técnico': item?.conferente,
     Turno: listaTurnos?.find(t => t.value === item.turno)?.label,
     'UP Origem': item?.upOrigem,
     'CD Origem': item?.cdOrigem,
