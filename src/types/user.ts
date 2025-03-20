@@ -7,6 +7,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password: string;
   profile: TipoPerfil;
   status: boolean;
   created_at: Date;

@@ -11,6 +11,20 @@ const nextConfig: NextConfig = {
   //     },
   //   ];
   // },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ocpggxfbtsykepvdatwz.supabase.co',
+        port: '',
+        pathname: '/storage/**',
+        search: '',
+      },
+    ],
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['@react-pdf/renderer'],
+  },
 };
 
 export default nextConfig;

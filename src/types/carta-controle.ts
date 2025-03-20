@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Turno } from './laudo-crm';
+import { User } from './user';
 
 export enum TipoEvidenciaCartaControle {
   ORDEM_CARREGAMENTO = 'ORDEM_CARREGAMENTO',
@@ -25,9 +27,10 @@ export interface CartaControle {
   conferente: string;
   doca: string;
   capacidadeVeiculo: string;
-  evidencias: string[];
+  evidencias: any[];
   observacoes: string;
   user_id: string;
+  users?: User;
   created_at: Date;
   updated_at: Date;
   canceled_at: Date | null;

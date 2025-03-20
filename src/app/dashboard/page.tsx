@@ -15,8 +15,13 @@ import {
   ListCheck,
   Sheet,
   ClipboardList,
+  Pencil,
+  Trash2,
+  X,
+  Eye,
 } from 'lucide-react';
 import dayjs from 'dayjs';
+import { pdf } from '@react-pdf/renderer';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -69,13 +74,18 @@ import {
 import { ModeToggle } from '@/components/ui/mode-toggle';
 import { useState } from 'react';
 import {
+  createUser,
+  deleteUser,
   getAllFormsPtp,
   getAllUsers,
+  getCartasControleByIdRequest,
   getCartasControleRequest,
   getDivergencesRequest,
+  getLaudosCrmByIdRequest,
   getLaudosCrmRequest,
   getUserByEmail,
   logout,
+  updateUser,
 } from './actions';
 import { FormPtp } from '@/types/form-ptp';
 import LogoYpe from '@/assets/logo-ype.svg';
@@ -100,12 +110,44 @@ import { getTipoEspecificacao } from '@/utils/get-tipo-especificacao';
 import { CartaControle } from '@/types/carta-controle';
 import { generateExcelCartasControle } from '@/utils/generate-excel-cartas-controle';
 import { listaTurnos } from '@/utils/listaTurnos';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { listaCDsOrigem, listaUPsOrigem } from '@/utils/listaUPs';
+import CartaControleDocument from '@/components/pdf-carta-controle';
+import logo from '@/assets/logo.svg';
+import { getTurno } from '@/utils/get-turno';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
+import { Label } from '@/components/ui/label';
+import { getTipoEvidencia } from '@/utils/get-tipo-evidencia';
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState('forms-ptp');
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<SupabaseSession | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [laudoCrmSelected, setLaudoCrmSelected] =
+    React.useState<LaudoCrm | null>(null);
+  const [cartaControleSelected, setCartaControleSelected] =
+    React.useState<CartaControle | null>(null);
+
+  React.useEffect(() => {
+    console.log('laudoCrmSelected', laudoCrmSelected);
+  }, [laudoCrmSelected]);
 
   React.useEffect(() => {
     if (session !== null && user === null) {
@@ -197,15 +239,34 @@ export default function Dashboard() {
           </header>
           <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-6 md:gap-8">
             {activePage === 'forms-ptp' && <FormPtpContent />}
-            {activePage === 'laudos-crm' && <LaudoCrmContent />}
+            {activePage === 'laudos-crm' && laudoCrmSelected === null && (
+              <LaudoCrmContent setLaudoCrmSelected={setLaudoCrmSelected} />
+            )}
             {activePage === 'divergencias' && <DivergenciasContent />}
-            {activePage === 'cartas-controle' && <CartasControleContent />}
+            {activePage === 'cartas-controle' &&
+              cartaControleSelected === null && (
+                <CartasControleContent
+                  setCartaControleSelected={setCartaControleSelected}
+                />
+              )}
             {activePage === 'usuarios' && <UsersContent />}
             {activePage === 'Analytics' && <AnalyticsContent />}
             {activePage === 'Orders' && <OrdersContent />}
             {activePage === 'Calendar' && <CalendarContent />}
             {activePage === 'Settings' && <SettingsContent />}
             {activePage === 'Help' && <HelpContent />}
+            {activePage === 'laudos-crm' && laudoCrmSelected && (
+              <DetalhesLaudoCrmContent
+                laudoCrmSelected={laudoCrmSelected}
+                onBack={() => setLaudoCrmSelected(null)}
+              />
+            )}
+            {activePage === 'cartas-controle' && cartaControleSelected && (
+              <DetalhesCartaControleContent
+                cartaControleSelected={cartaControleSelected}
+                onBack={() => setCartaControleSelected(null)}
+              />
+            )}
           </main>
         </SidebarInset>
       </div>
@@ -635,12 +696,16 @@ function FormPtpContent() {
 }
 
 // Home page content
-function LaudoCrmContent() {
+function LaudoCrmContent({ setLaudoCrmSelected }: any) {
   const [allProducts, setAllProducts] = React.useState<any[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
   const [isLoadingLaudo, setIsLoadingLaudo] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [productToDelete, setProductToDelete] = React.useState<LaudoCrm | null>(
+    null,
+  );
 
   React.useEffect(() => {
     getLaudosCrmRequest()
@@ -656,7 +721,6 @@ function LaudoCrmContent() {
               ...laudosCrm,
               {
                 ...laudoCrm,
-                evidencias: [],
               },
             ];
           }
@@ -665,6 +729,7 @@ function LaudoCrmContent() {
             const tiposNaoConformidade = laudo?.tiposNaoConformidade;
             const lotes = laudo?.lotes;
             const codigosProdutos = laudo?.codigoProdutos;
+            const turno = getTurno(laudo?.turno);
 
             let tiposNaoConformidadeFormatted = '';
 
@@ -703,6 +768,7 @@ function LaudoCrmContent() {
 
             return {
               ...laudo,
+              turno,
               observacoes: laudo?.observacoes || 'Sem observações',
               tiposNaoConformidade: tiposNaoConformidadeFormatted,
               lotes: lotesFormatted,
@@ -761,6 +827,25 @@ function LaudoCrmContent() {
     }
   };
 
+  // Handle edit product
+  const handleEdit = (laudoCrm: LaudoCrm) => {
+    setLaudoCrmSelected(laudoCrm);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteClick = (laudoCrm: LaudoCrm) => {
+    setProductToDelete(laudoCrm);
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle actual deletion
+  const handleConfirmDelete = () => {
+    // Here you would implement the actual deletion logic
+    console.log(`Deleting product: ${productToDelete?.id}`);
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -813,41 +898,79 @@ function LaudoCrmContent() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="grid grid-cols-6 border-b bg-muted/50 p-3 font-medium">
-              {/* <div>ID</div> */}
+            <div className="grid grid-cols-8 border-b bg-muted/50 p-3 font-medium">
+              <div>Nota Fiscal/DT</div>
               <div>Transportador</div>
               <div>Remessa</div>
               <div>Placa</div>
               <div>Turno</div>
               <div>CD Origem</div>
               <div>Data Identificação</div>
-              {/* <div>Status</div> */}
+              <div className="justify-self-center">Ações</div>
             </div>
             {currentProducts?.length > 0 ? (
               currentProducts?.map((product: LaudoCrm) => (
-                <div key={product.id} className="grid grid-cols-6 border-b p-3">
-                  {/* <div>#{product?.id?.substring(0, 8)}</div> */}
-                  <div>{product?.transportador}</div>
-                  <div>{product?.remessa}</div>
-                  <div>{product?.placa}</div>
-                  <div>{product?.turno}</div>
-                  <div>{product?.cdOrigem}</div>
+                <div key={product.id} className="grid grid-cols-8 border-b p-2">
+                  <div className="flex-wrap break-words p-1">
+                    {product?.notaFiscal}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.transportador}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.remessa}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.placa}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.turno}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.cdOrigem}
+                  </div>
                   <div>
                     {dayjs(product?.dataIdentificacao).format('DD/MM/YYYY')}
                   </div>
-                  {/* <div>
-                      <Badge
-                        variant={
-                          product?.status === FormPtpStatus.EM_ANDAMENTO
-                            ? 'outline'
-                            : product?.status === FormPtpStatus.FINALIZADO
-                            ? 'default'
-                            : 'destructive'
-                        }
-                      >
-                        {getFormPtpStatus(product?.status)}
-                      </Badge>
-                    </div> */}
+                  <div className="flex space-x-2 justify-self-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(product)}
+                            className="cursor-pointer h-8 w-8"
+                          >
+                            <Eye className="h-4 w-4" />
+                            <span className="sr-only">Visualizar</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Visualizar</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteClick(product)}
+                            className="cursor-pointer h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Remover</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Remover</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
               ))
             ) : (
@@ -951,6 +1074,378 @@ function LaudoCrmContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirma Deleção</DialogTitle>
+            <DialogDescription>
+              Você tem certeza que quer apagar esse Laudo CRM? Essa ação não
+              poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          {productToDelete && (
+            <div className="py-4">
+              <p className="font-medium">Detalhes Laudo CRM:</p>
+              <p>
+                <span className="text-muted-foreground">Remessa:</span>{' '}
+                {productToDelete.remessa}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Nota Fiscal/DT:</span>{' '}
+                {productToDelete.notaFiscal}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Turno:</span>{' '}
+                {productToDelete.turno}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="cursor-pointer"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              className="cursor-pointer"
+            >
+              Deletar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Detalhes Laudo Crm Page
+function DetalhesLaudoCrmContent({
+  laudoCrmSelected,
+  onBack,
+}: {
+  laudoCrmSelected: LaudoCrm | null;
+  onBack: () => void;
+}) {
+  const [laudoCrm, setLaudoCrm] = React.useState<LaudoCrm | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = React.useState(false);
+  const [selectedImage, setSelectedImage] = React.useState('');
+
+  React.useEffect(() => {
+    if (laudoCrmSelected && laudoCrmSelected !== null) {
+      getLaudosCrmByIdRequest(laudoCrmSelected?.id)
+        .then(response => {
+          console.log('response getLaudosCrmByIdRequest', response);
+
+          if (response?.status === 200) {
+            const data = response?.data[0];
+
+            setLaudoCrm(data);
+          }
+
+          // if (response?.status === 200) {
+          //   let laudosCrm: any[] = [];
+
+          //   if (response?.data?.length === 1) {
+          //     for await (const laudoCrm of response?.data as any[]) {
+          //       const evidencias = laudoCrm?.evidencias;
+
+          //       let urlsEvidencias: any[] = [];
+
+          //       if (evidencias?.length === 0) {
+          //         urlsEvidencias = [];
+          //       } else {
+          //         for await (const evidenciaId of evidencias) {
+          //           const { data } = await getLaudoCrmEvidencesRequest(
+          //             laudoCrm?.id,
+          //             evidenciaId,
+          //           );
+
+          //           const evidencia = data?.publicUrl;
+
+          //           if (evidencia) {
+          //             urlsEvidencias = [...urlsEvidencias, evidencia];
+          //           } else {
+          //             urlsEvidencias = [...urlsEvidencias];
+          //           }
+          //         }
+          //       }
+
+          //       laudosCrm = [
+          //         ...laudosCrm,
+          //         {
+          //           ...laudoCrm,
+          //           evidencias: [...urlsEvidencias],
+          //         },
+          //       ];
+          //     }
+
+          //     const tiposNaoConformidadeFormatted = laudosCrm.map(laudo => {
+          //       const tiposNaoConformidade = laudo?.tiposNaoConformidade;
+          //       const lotes = laudo?.lotes;
+          //       const codigosProdutos = laudo?.codigoProdutos;
+          //       const qtdCaixasNaoConformes = laudo?.qtdCaixasNaoConformes;
+
+          //       let tiposNaoConformidadeFormatted = '';
+
+          //       if (tiposNaoConformidade?.length > 0) {
+          //         tiposNaoConformidadeFormatted = tiposNaoConformidade
+          //           .map(
+          //             (tipo: string) =>
+          //               '- ' +
+          //               tiposNaoConformidadeList?.find(
+          //                 item => item?.value === tipo,
+          //               )?.label,
+          //           )
+          //           .join('\n');
+          //       } else {
+          //         tiposNaoConformidadeFormatted =
+          //           'Sem tipos de não conformidade';
+          //       }
+
+          //       let lotesFormatted = '';
+
+          //       if (lotes?.length > 0) {
+          //         lotesFormatted = lotes
+          //           .map((lote: string) => '- ' + lote?.trim())
+          //           .join('\n');
+          //       } else {
+          //         lotesFormatted = 'Sem lotes cadastrados';
+          //       }
+
+          //       let codigosProdutosFormatted = '';
+
+          //       if (codigosProdutos?.length > 0) {
+          //         codigosProdutosFormatted = codigosProdutos
+          //           .map(
+          //             (codigoProduto: string) => '- ' + codigoProduto?.trim(),
+          //           )
+          //           .join('\n');
+          //       } else {
+          //         codigosProdutosFormatted =
+          //           'Sem códigos de produtos cadastrados';
+          //       }
+
+          //       let qtdCaixasNaoConformesFormatted = '';
+
+          //       if (qtdCaixasNaoConformes?.length > 0) {
+          //         qtdCaixasNaoConformesFormatted = qtdCaixasNaoConformes
+          //           .map(
+          //             (qtdCaixasNaoConforme: string) =>
+          //               '- ' + qtdCaixasNaoConforme?.trim(),
+          //           )
+          //           .join('\n');
+          //       } else {
+          //         qtdCaixasNaoConformesFormatted =
+          //           'Sem códigos de produtos cadastrados';
+          //       }
+
+          //       const upOrigem = listaUPsOrigem?.find(
+          //         u => u?.value === laudo?.upOrigem,
+          //       )?.label;
+          //       const cdOrigem = listaCDsOrigem?.find(
+          //         u => u?.value === laudo?.cdOrigem,
+          //       )?.label;
+
+          //       return {
+          //         ...laudo,
+          //         upOrigem: upOrigem || 'Sem UP de Origem',
+          //         cdOrigem: cdOrigem || 'Sem CD de Origem',
+          //         observacoes: laudo?.observacoes || 'Sem observações',
+          //         tiposNaoConformidade: tiposNaoConformidadeFormatted,
+          //         lotes: lotesFormatted,
+          //         codigosProdutos: codigosProdutosFormatted,
+          //         qtdCaixasNaoConformes: qtdCaixasNaoConformesFormatted,
+          //       };
+          //     });
+
+          //     console.log(
+          //       'laudosCrm => ',
+          //       JSON.stringify(tiposNaoConformidadeFormatted[0], null, 2),
+          //     );
+
+          //     setLaudoCrm({ ...(tiposNaoConformidadeFormatted[0] as any) });
+          //   }
+          // }
+        })
+        .catch(err => console.error('Page Error Get user', err));
+    }
+  }, [laudoCrmSelected]);
+
+  // Function to open image preview
+  const openImagePreview = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageModalOpen(true);
+  };
+
+  const handleDownload = async () => {
+    if (!laudoCrm) return;
+    // Gerar o PDF com os dados dinâmicos
+    // const blob = await pdf(
+    //   <CartaControleDocument
+    //     logo={logo}
+    //     id={laudoCrm?.id}
+    //     quantidade={laudoCrm?.notaFiscal}
+    //     observacao={laudoCrm?.observacoes}
+    //     dados={laudoCrm}
+    //     imagens={laudoCrm?.evidencias}
+    //   />,
+    // ).toBlob();
+
+    // // Criar link de download
+    // const url = URL.createObjectURL(blob);
+    // const a = document.createElement('a');
+    // a.href = url;
+    // a.download = 'trabalho_abnt.pdf';
+    // a.click();
+    // URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Detalhes</h2>
+          <p className="text-muted-foreground">
+            Detalhes da informação sobre o Laudo CRM
+          </p>
+        </div>
+        <Button variant="outline" onClick={onBack} className="cursor-pointer">
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+      </div>
+
+      <Card key={laudoCrmSelected?.id} className="overflow-hidden pt-0">
+        <CardHeader className="flex flex-row  items-center justify-between bg-primary/5 py-3">
+          <div className="flex flex-col">
+            <CardTitle className="text-lg font-bold">
+              ID: {laudoCrmSelected?.id}
+            </CardTitle>
+
+            <CardDescription>
+              Data:{' '}
+              {dayjs(laudoCrmSelected?.dataIdentificacao).format('DD/MM/YYYY')}
+            </CardDescription>
+          </div>
+          {/* <Badge variant="outline" className="ml-auto">
+            {
+              listaTurnos?.find(
+                turno => turno?.value === laudoCrmSelected?.turno,
+              )?.label
+            }
+          </Badge> */}
+          <Button className="cursor-pointer" onClick={handleDownload}>
+            Baixar PDF
+          </Button>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          <div className="flex justify-between gap-3">
+            <div className="flex w-[50%] flex-col gap-3 text-sm">
+              <div>
+                <p className="font-medium text-muted-foreground">
+                  Nota Fiscal/DT
+                </p>
+                <p>{laudoCrmSelected?.notaFiscal}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">
+                  Transportador
+                </p>
+                <p>{laudoCrmSelected?.transportador}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Remessa</p>
+                <p>{laudoCrmSelected?.remessa}</p>
+              </div>
+            </div>
+            <div className="flex w-[50%] flex-col gap-3 text-sm">
+              <div>
+                <p className="font-medium text-muted-foreground">Conferente</p>
+                <p>{laudoCrmSelected?.conferente}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">UP Origem</p>
+                <p>
+                  {
+                    listaUPsOrigem?.find(
+                      up => up?.value === laudoCrmSelected?.upOrigem,
+                    )?.label
+                  }
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">CD Origem</p>
+                <p>
+                  {
+                    listaCDsOrigem?.find(
+                      up => up?.value === laudoCrmSelected?.cdOrigem,
+                    )?.label
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground mb-1">
+              Observações
+            </p>
+            <p className="text-sm">{laudoCrmSelected?.observacoes}</p>
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground mb-2">
+              Evidências ({laudoCrm?.evidencias?.length})
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {laudoCrm &&
+                laudoCrm?.evidencias?.length > 0 &&
+                laudoCrm?.evidencias?.map((img, index) => (
+                  <div key={index} className="flex">
+                    <Image
+                      src={img}
+                      alt={`Evidence ${index + 1}`}
+                      className="h-50 w-50 object-cover rounded-md border hover:opacity-90 cursor-pointer"
+                      onClick={() => openImagePreview(img)}
+                      width={200}
+                      height={200}
+                    />
+                  </div>
+                ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Image Preview Modal */}
+      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+        <DialogTitle />
+        <DialogContent className="w-200 h-200 max-w-[80vw] max-h-[80vh] p-0 overflow-hidden">
+          <DialogHeader className="absolute top-2 right-2 z-10">
+            <DialogClose className="cursor-pointer rounded-full bg-background/80 p-2 backdrop-blur-sm hover:bg-black/10">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Fechar</span>
+            </DialogClose>
+          </DialogHeader>
+          <div className="flex items-center justify-center w-full h-full">
+            {selectedImage && (
+              <Image
+                src={selectedImage}
+                alt="Preview"
+                className="w-200 h-200 max-w-full max-h-[80vh] object-contain"
+                width={800}
+                height={800}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1668,12 +2163,15 @@ function DivergenciasContent() {
 }
 
 // Dashboard page content
-function CartasControleContent() {
+function CartasControleContent({ setCartaControleSelected }: any) {
   const [allProducts, setAllProducts] = React.useState<CartaControle[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
   const [isLoadingPtp, setIsLoadingPtp] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [productToDelete, setProductToDelete] =
+    React.useState<CartaControle | null>(null);
 
   React.useEffect(() => {
     getCartasControleRequest()
@@ -1731,6 +2229,25 @@ function CartasControleContent() {
     }
   };
 
+  // Handle edit product
+  const handleEdit = (cartaControle: CartaControle) => {
+    setCartaControleSelected(cartaControle);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteClick = (cartaControle: CartaControle) => {
+    setProductToDelete(cartaControle);
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle actual deletion
+  const handleConfirmDelete = () => {
+    // Here you would implement the actual deletion logic
+    console.log(`Deleting product: ${productToDelete?.id}`);
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -1783,7 +2300,7 @@ function CartasControleContent() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="grid grid-cols-7 border-b bg-muted/50 p-3 font-medium">
+            <div className="grid grid-cols-8 border-b bg-muted/50 p-3 font-medium">
               {/* <div>ID</div> */}
               <div>Conferente/Técnico</div>
               <div>Turno</div>
@@ -1792,10 +2309,11 @@ function CartasControleContent() {
               <div>Doca</div>
               <div>Capacidade Veículo</div>
               <div>Data Recebimento</div>
+              <div>Ações</div>
             </div>
             {currentProducts?.length > 0 ? (
               currentProducts?.map((product: CartaControle) => (
-                <div key={product.id} className="grid grid-cols-7 border-b p-3">
+                <div key={product.id} className="grid grid-cols-8 border-b p-3">
                   {/* <div>#{product?.id?.substring(0, 8)}</div> */}
                   <div>{product?.conferente}</div>
                   <div>
@@ -1807,6 +2325,45 @@ function CartasControleContent() {
                   <div>{product?.capacidadeVeiculo}</div>
                   <div>
                     {dayjs(product?.dataIdentificacao).format('DD/MM/YYYY')}
+                  </div>
+                  <div className="flex space-x-2 justify-self-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(product)}
+                            className="cursor-pointer h-8 w-8"
+                          >
+                            <Eye className="h-4 w-4" />
+                            <span className="sr-only">Visualizar</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Visualizar</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteClick(product)}
+                            className="cursor-pointer h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Remover</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Remover</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               ))
@@ -1911,37 +2468,306 @@ function CartasControleContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirma Deleção</DialogTitle>
+            <DialogDescription>
+              Você tem certeza que quer apagar essa Carta Controle? Essa ação
+              não poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          {productToDelete && (
+            <div className="py-4">
+              <p className="font-medium">Detalhes Carta Controle:</p>
+              <p>
+                <span className="text-muted-foreground">Conferente:</span>{' '}
+                {productToDelete?.conferente}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Remessa:</span>{' '}
+                {productToDelete?.remessa}
+              </p>
+              <p>
+                <span className="text-muted-foreground">
+                  documentoTransporte:
+                </span>{' '}
+                {productToDelete?.documentoTransporte}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Doca:</span>{' '}
+                {productToDelete?.doca}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Turno:</span>{' '}
+                {productToDelete?.turno}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Evidênias:</span>{' '}
+                {productToDelete?.evidencias?.length}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="cursor-pointer"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              className="cursor-pointer"
+            >
+              Deletar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Detalhes Laudo Crm Page
+function DetalhesCartaControleContent({
+  cartaControleSelected,
+  onBack,
+}: {
+  cartaControleSelected: CartaControle | null;
+  onBack: () => void;
+}) {
+  const [cartaControle, setCartaControle] =
+    React.useState<CartaControle | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = React.useState(false);
+  const [selectedImage, setSelectedImage] = React.useState('');
+
+  React.useEffect(() => {
+    if (cartaControleSelected && cartaControleSelected !== null) {
+      getCartasControleByIdRequest(cartaControleSelected?.id)
+        .then(response => {
+          console.log('response getCartasControleByIdRequest', response);
+
+          if (response?.status === 200) {
+            const data = response?.data[0];
+
+            setCartaControle(data);
+          }
+        })
+        .catch(err => console.error('Page Error Get user', err));
+    }
+  }, [cartaControleSelected]);
+
+  // Function to open image preview
+  const openImagePreview = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageModalOpen(true);
+  };
+
+  const handleDownload = async () => {
+    if (!cartaControle) return;
+    // Gerar o PDF com os dados dinâmicos
+    const blob = await pdf(
+      <CartaControleDocument data={cartaControle} />,
+    ).toBlob();
+
+    // Criar link de download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Carta Controle ${cartaControle?.id?.substring(0, 5)}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Detalhes</h2>
+          <p className="text-muted-foreground">
+            Detalhes da informação sobre a Carta Controle
+          </p>
+        </div>
+        <Button variant="outline" onClick={onBack} className="cursor-pointer">
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+      </div>
+
+      <Card key={cartaControleSelected?.id} className="overflow-hidden pt-0">
+        <CardHeader className="flex flex-row  items-center justify-between bg-primary/5 py-3">
+          <div className="flex flex-col">
+            <CardTitle className="text-lg font-bold">
+              ID: {cartaControleSelected?.id}
+            </CardTitle>
+
+            <CardDescription>
+              Data:{' '}
+              {dayjs(cartaControleSelected?.dataIdentificacao).format(
+                'DD/MM/YYYY',
+              )}
+            </CardDescription>
+          </div>
+          {/* <Badge variant="outline" className="ml-auto">
+            {
+              listaTurnos?.find(
+                turno => turno?.value === cartaControleSelected?.turno,
+              )?.label
+            }
+          </Badge> */}
+          <Button className="cursor-pointer" onClick={handleDownload}>
+            Baixar PDF
+          </Button>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          <div className="flex justify-between gap-3">
+            <div className="flex w-[50%] flex-col gap-3 text-sm">
+              <div>
+                <p className="font-medium text-muted-foreground">
+                  Documento Transporte
+                </p>
+                <p>{cartaControleSelected?.documentoTransporte}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Remessa</p>
+                <p>{cartaControleSelected?.remessa}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Conferente</p>
+                <p>{cartaControleSelected?.conferente}</p>
+              </div>
+            </div>
+            <div className="flex w-[50%] flex-col gap-3 text-sm">
+              <div>
+                <p className="font-medium text-muted-foreground">Turno</p>
+                <p>{cartaControleSelected?.turno}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Doca</p>
+                <p>{cartaControleSelected?.doca}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">
+                  Capacidade Veículo
+                </p>
+                <p>{cartaControleSelected?.capacidadeVeiculo}</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground mb-1">
+              Observações
+            </p>
+            <p className="text-sm">{cartaControleSelected?.observacoes}</p>
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground mb-2">
+              Evidências ({cartaControle?.evidencias?.length})
+            </p>
+            {/* <div className="flex flex-col w-full gap-4"> */}
+            {cartaControle &&
+              cartaControle?.evidencias?.length > 0 &&
+              cartaControle?.evidencias?.map((img: any, index) => (
+                <div key={index} className="flex flex-col gap-4 mb-4">
+                  <span className="text-lg font-bold">
+                    {getTipoEvidencia(img?.grupo)}
+                  </span>
+                  <div className="flex flex-row flex-wrap gap-2 mb-3">
+                    {img?.data?.map((imgData: any, indexData: number) => (
+                      <Image
+                        key={indexData}
+                        src={imgData?.url}
+                        alt={`Evidence ${indexData + 1}`}
+                        className="h-50 w-50 object-cover rounded-md border hover:opacity-90 cursor-pointer"
+                        onClick={() => openImagePreview(imgData?.url)}
+                        width={200}
+                        height={200}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            {/* </div> */}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Image Preview Modal */}
+      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+        <DialogTitle />
+        <DialogContent className="w-200 h-200 max-w-[80vw] max-h-[80vh] p-0 overflow-hidden">
+          <DialogHeader className="absolute top-2 right-2 z-10">
+            <DialogClose className="cursor-pointer rounded-full bg-background/80 p-2 backdrop-blur-sm hover:bg-black/10">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Fechar</span>
+            </DialogClose>
+          </DialogHeader>
+          <div className="flex items-center justify-center w-full h-full">
+            {selectedImage && (
+              <Image
+                src={selectedImage}
+                alt="Preview"
+                className="w-200 h-200 max-w-full max-h-[80vh] object-contain"
+                width={800}
+                height={800}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 // Placeholder components for other pages
 function UsersContent() {
-  const [allProducts, setAllProducts] = React.useState<User[]>([]);
+  const [allUsers, setAllUsers] = React.useState<any[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [userToDelete, setUserToDelete] = React.useState<any | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [drawerFormData, setDrawerFormData] = React.useState({
+    id: '',
+    name: '',
+    email: '',
+    password: '',
+    profile: TipoPerfil.MEMBER,
+    status: false,
+  });
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [drawerCreateOpen, setDrawerCreateOpen] = React.useState(false);
 
   React.useEffect(() => {
     getAllUsers()
       .then(data => {
         console.log('users', data?.data);
         const ok = data !== null ? data?.data : [];
-        setAllProducts([...ok]);
+        setAllUsers([...ok]);
       })
       .catch(err => {
         console.log('erro', err);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
   const filteredProducts = React.useMemo(() => {
-    return allProducts?.filter(
+    return allUsers?.filter(
       product =>
         product?.name?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
         product?.email?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
         product?.profile?.toLowerCase()?.includes(searchQuery?.toLowerCase()),
     );
-  }, [searchQuery, allProducts]);
+  }, [searchQuery, allUsers]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -1958,6 +2784,112 @@ function UsersContent() {
   const handleItemsPerPageChange = (value: any) => {
     setItemsPerPage(Number(value));
     setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  // Handle delete confirmation
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle actual deletion
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    // Here you would implement the actual deletion logic
+    console.log(`Deleting product: ${userToDelete?.id}`);
+
+    const response = await deleteUser(userToDelete?.id);
+    console.log('response', response);
+
+    if (response?.status === 204) {
+      const userFiltered = allUsers?.filter(
+        user => user?.id !== userToDelete?.id,
+      );
+
+      setAllUsers([...userFiltered]);
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    }
+  };
+
+  // Handle view product in drawer
+  const handleEdit = (user: User) => {
+    setDrawerFormData({
+      id: user?.id,
+      name: user?.name,
+      email: user?.email,
+      profile: user?.profile,
+      status: user?.status,
+      password: user?.password,
+    });
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setDrawerFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Handle save changes from drawer
+  const handleSaveDrawerChanges = async () => {
+    setIsLoading(true);
+
+    try {
+      const response = await updateUser(drawerFormData);
+
+      if (
+        response?.data &&
+        response?.data?.length > 0 &&
+        response?.status === 200
+      ) {
+        const data = response?.data[0];
+
+        const userIndex = allUsers?.findIndex(user => user?.id === data?.id);
+
+        if (userIndex > -1) {
+          allUsers[userIndex] = data;
+
+          setAllUsers([...allUsers]);
+        }
+
+        setDrawerOpen(false);
+      }
+    } catch (error) {
+      console.log('error', error);
+    } finally {
+      setIsLoading(false);
+    }
+    // Here you would implement the actual update logic
+  };
+
+  const handleUserCreate = () => {
+    setDrawerCreateOpen(true);
+  };
+
+  // Handle save changes from drawer
+  const handleSaveUser = async () => {
+    setIsLoading(true);
+
+    try {
+      const response = await createUser(drawerFormData);
+
+      if (response?.data && response?.data?.length > 0 && response !== null) {
+        const users = response?.data;
+
+        console.log('users', users);
+        setAllUsers([...users]);
+
+        setDrawerCreateOpen(false);
+      }
+    } catch (error) {
+      console.log('error', error);
+    } finally {
+      setIsLoading(false);
+    }
+    // Here you would implement the actual update logic
   };
 
   return (
@@ -1983,27 +2915,33 @@ function UsersContent() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Listagem de usuários</CardTitle>
-          <CardDescription>
-            Mostrando {startIndex + 1}-
-            {Math.min(endIndex, filteredProducts?.length)} de{' '}
-            {filteredProducts?.length} usuários
-          </CardDescription>
+        <CardHeader className="flex flex-row justify-between">
+          <div>
+            <CardTitle>Listagem de usuários</CardTitle>
+            <CardDescription>
+              Mostrando {startIndex + 1}-
+              {Math.min(endIndex, filteredProducts?.length)} de{' '}
+              {filteredProducts?.length} usuários
+            </CardDescription>
+          </div>
+          <Button className="cursor-pointer" onClick={handleUserCreate}>
+            Cadastrar
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="grid grid-cols-5 border-b bg-muted/50 p-3 font-medium">
+            <div className="grid grid-cols-6 border-b bg-muted/50 p-3 font-medium">
               {/* <div>ID</div> */}
               <div>Nome</div>
               <div>E-mail</div>
               <div>Permissão</div>
               <div>Status</div>
               <div>Data Inclusão</div>
+              <div className="justify-self-center">Ações</div>
             </div>
             {currentProducts?.length > 0 ? (
               currentProducts?.map((product: User) => (
-                <div key={product.id} className="grid grid-cols-5 border-b p-3">
+                <div key={product.id} className="grid grid-cols-6 border-b p-3">
                   {/* <div>#{product?.id?.substring(0, 8)}</div> */}
                   <div>{product?.name}</div>
                   <div className="truncate text-ellipsis">{product?.email}</div>
@@ -2031,6 +2969,45 @@ function UsersContent() {
                     />
                   </div>
                   <div>{dayjs(product?.created_at).format('DD/MM/YYYY')}</div>
+                  <div className="flex space-x-2 justify-self-center">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(product)}
+                            className="cursor-pointer h-8 w-8"
+                          >
+                            <Pencil className="h-4 w-4" />
+                            <span className="sr-only">Editar</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Editar</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteClick(product)}
+                            className="cursor-pointer h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Remover</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Remover</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
               ))
             ) : (
@@ -2134,6 +3111,213 @@ function UsersContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirma Deleção</DialogTitle>
+            <DialogDescription>
+              Você tem certeza que quer apagar esse usuário? Essa ação não
+              poderá ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          {userToDelete && (
+            <div className="py-4">
+              <p className="font-medium">Detalhes do usuário:</p>
+              <p>
+                <span className="text-muted-foreground">Nome:</span>{' '}
+                {userToDelete.name}
+              </p>
+              <p>
+                <span className="text-muted-foreground">E-mail:</span>{' '}
+                {userToDelete.email}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Profile:</span>{' '}
+                {userToDelete.profile}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              className="cursor-pointer"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              className="cursor-pointer"
+            >
+              Deletar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
+        <DrawerContent>
+          <div className="mx-auto w-full max-w-sm">
+            <DrawerHeader>
+              <DrawerTitle>Editar Usuário</DrawerTitle>
+              <DrawerDescription>
+                {userToDelete &&
+                  `Usuário #${userToDelete?.id} - ${userToDelete?.name}`}
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="p-4 pb-0">
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="drawer-name">Nome</Label>
+                  <Input
+                    id="drawer-name"
+                    name="name"
+                    placeholder="Digite o nome"
+                    value={drawerFormData?.name}
+                    onChange={handleDrawerInputChange}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="drawer-email">E-mail</Label>
+                  <Input
+                    id="drawer-name"
+                    name="email"
+                    placeholder="Digite o e-mail"
+                    value={drawerFormData?.email}
+                    onChange={handleDrawerInputChange}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="drawer-profile">Perfil</Label>
+                  <Select
+                    value={drawerFormData?.profile}
+                    onValueChange={value =>
+                      setDrawerFormData((prev: any) => ({
+                        ...prev,
+                        profile: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-full" id="drawer-profile">
+                      <SelectValue placeholder="Select profile" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={TipoPerfil.ADMIN}>Admin</SelectItem>
+                      <SelectItem value={TipoPerfil.MEMBER}>Membro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <DrawerFooter>
+              <Button
+                className="cursor-pointer"
+                onClick={handleSaveDrawerChanges}
+                disabled={isLoading}
+              >
+                {isLoading && <Spinner size="small" className="text-white" />}
+                Salvar
+              </Button>
+              <DrawerClose asChild>
+                <Button
+                  disabled={isLoading}
+                  className="cursor-pointer"
+                  variant="outline"
+                >
+                  Cancelar
+                </Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer
+        open={drawerCreateOpen}
+        onOpenChange={setDrawerCreateOpen}
+        direction="right"
+      >
+        <DrawerContent>
+          <div className="mx-auto w-full max-w-sm">
+            <DrawerHeader>
+              <DrawerTitle>Criar Usuário</DrawerTitle>
+            </DrawerHeader>
+            <div className="p-4 pb-0">
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="drawer-name">Nome</Label>
+                  <Input
+                    id="drawer-name"
+                    name="name"
+                    placeholder="Digite o nome"
+                    value={drawerFormData?.name}
+                    onChange={handleDrawerInputChange}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="drawer-email">E-mail</Label>
+                  <Input
+                    id="drawer-email"
+                    name="email"
+                    type="email"
+                    placeholder="Digite o e-mail"
+                    value={drawerFormData?.email}
+                    onChange={handleDrawerInputChange}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="drawer-password">Senha</Label>
+                  <Input
+                    id="drawer-password"
+                    name="password"
+                    placeholder="Digite uma senha"
+                    value={drawerFormData?.password}
+                    onChange={handleDrawerInputChange}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="drawer-profile">Perfil</Label>
+                  <Select
+                    value={drawerFormData?.profile}
+                    onValueChange={value =>
+                      setDrawerFormData((prev: any) => ({
+                        ...prev,
+                        profile: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger className="w-full" id="drawer-profile">
+                      <SelectValue placeholder="Select profile" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={TipoPerfil.ADMIN}>Admin</SelectItem>
+                      <SelectItem value={TipoPerfil.MEMBER}>Membro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <DrawerFooter>
+              <Button
+                className="cursor-pointer"
+                onClick={handleSaveUser}
+                disabled={isLoading}
+              >
+                {isLoading && <Spinner size="small" className="text-white" />}
+                Cadastrar
+              </Button>
+            </DrawerFooter>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
