@@ -1,6 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, StyleSheet } from '@react-pdf/renderer';
-import { LaudoCrm } from '@/types/laudo-crm';
+// import { LaudoCrm } from '@/types/laudo-crm';
 
 // Estilos no padrão ABNT
 const styles = StyleSheet.create({
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
 });
 
 // Componente PDF que recebe props
-const LaudoCrmDocument = ({ data }: { data: LaudoCrm }) => (
+const LaudoCrmDocument = () => (
   <Document>
     <Page size="A4" style={styles.page}>
       <Text style={styles.title}>Laudo CRM</Text>
