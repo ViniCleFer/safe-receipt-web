@@ -121,7 +121,7 @@ import {
 } from '@/components/ui/dialog';
 import { listaCDsOrigem, listaUPsOrigem } from '@/utils/listaUPs';
 import CartaControleDocument from '@/components/pdf-carta-controle';
-import logo from '@/assets/logo.svg';
+// import logo from '@/assets/logo.svg';
 import { getTurno } from '@/utils/get-turno';
 import {
   Drawer,
