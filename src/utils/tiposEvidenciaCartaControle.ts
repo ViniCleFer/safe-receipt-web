@@ -1,4 +1,4 @@
-import { TipoEvidenciaCartaControle } from '@/services/requests/cartas-controle/types';
+import { TipoEvidenciaCartaControle } from '@/types/carta-controle';
 
 export const tiposEvidenciaCartaControle = [
   {
