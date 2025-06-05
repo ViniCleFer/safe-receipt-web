@@ -7,7 +7,7 @@ export function getTipoEspecificacao(tipoEspecificacao: TipoEspecificacao) {
     case TipoEspecificacao.RECEBIMENTO:
       return 'Recebimento';
     case TipoEspecificacao.SEPARACAO_MONTAGEM:
-      return 'Separaçãp e Montagem';
+      return 'Separação e Montagem';
     default:
       return 'Tipo desconhecido';
   }

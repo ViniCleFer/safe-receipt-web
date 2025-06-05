@@ -350,9 +350,7 @@ function DashboardSidebar({
           >
             {/* <Package className="h-6 w-6" /> */}
             <Image src={LogoYpe} alt="Logo Ypê" width={50} height={50} />
-            {!isCollapsed && (
-              <span className="text-lg font-semibold">Ypê Salto</span>
-            )}
+            {!isCollapsed && <span className="text-lg font-semibold">Ypê</span>}
           </div>
           <Separator />
         </SidebarHeader>
@@ -373,8 +371,22 @@ function DashboardSidebar({
                                 onClick={() => setActivePage(item.route)}
                                 className="cursor-pointer"
                               >
-                                <item.icon className="h-4 w-4" />
-                                <span>{item.title}</span>
+                                <item.icon
+                                  className={`${
+                                    activePage === item.route
+                                      ? 'text-primary'
+                                      : 'default'
+                                  }`}
+                                />
+                                <span
+                                  className={`${
+                                    activePage === item.route
+                                      ? 'text-primary'
+                                      : 'default'
+                                  }`}
+                                >
+                                  {item.title}
+                                </span>
                               </SidebarMenuButton>
                             </TooltipTrigger>
                             {isCollapsed && (
@@ -695,7 +707,7 @@ function FormPtpContent() {
   );
 }
 
-// Home page content
+// Laudo Crm Page content
 function LaudoCrmContent({ setLaudoCrmSelected }: any) {
   const [allProducts, setAllProducts] = React.useState<any[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -1450,7 +1462,7 @@ function DetalhesLaudoCrmContent({
   );
 }
 
-// Products page content
+// Divergencias page content
 function DivergenciasContent() {
   const [allProductsFalta, setAllProductsFalta] = React.useState<Divergencia[]>(
     [],
@@ -2162,7 +2174,7 @@ function DivergenciasContent() {
   );
 }
 
-// Dashboard page content
+// Carta Controle page content
 function CartasControleContent({ setCartaControleSelected }: any) {
   const [allProducts, setAllProducts] = React.useState<CartaControle[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -2532,7 +2544,7 @@ function CartasControleContent({ setCartaControleSelected }: any) {
   );
 }
 
-// Detalhes Laudo Crm Page
+// Detalhes Carta Controle Page
 function DetalhesCartaControleContent({
   cartaControleSelected,
   onBack,
@@ -2725,7 +2737,7 @@ function DetalhesCartaControleContent({
   );
 }
 
-// Placeholder components for other pages
+// User Page content
 function UsersContent() {
   const [allUsers, setAllUsers] = React.useState<any[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
