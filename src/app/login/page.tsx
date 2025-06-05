@@ -1,8 +1,11 @@
 import Image from 'next/image';
 
 import logo from '@/assets/logo.svg';
+import logoYpe from '@/assets/logo-ype.svg';
 
+import { Quality } from '@/components/quality';
 import { LoginForm } from '@/components/login-form';
+
 import { signIn } from './actions';
 
 export default function LoginPage() {
@@ -16,7 +19,7 @@ export default function LoginPage() {
               alt="Image"
               className="h-6 w-6 items-center justify-center rounded-md"
             />
-            VF Code Ltda.
+            {/* VF Code Ltda. */}
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -35,10 +38,12 @@ export default function LoginPage() {
       </div>
       <div className="relative hidden bg-muted lg:flex items-center justify-center">
         <Image
-          src={logo}
+          src={logoYpe}
           alt="Image"
           className="rounded-md absolute h-[30%] w-[30%] object-cover dark:brightness-[0.2] dark:grayscale"
         />
+
+        <Quality />
       </div>
     </div>
   );
