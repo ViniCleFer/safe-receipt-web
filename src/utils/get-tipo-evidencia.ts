@@ -8,7 +8,7 @@ export function getTipoEvidencia(
     case TipoEvidenciaCartaControle.ORDEM_CARREGAMENTO:
       return 'Ordem de carregamento';
     case TipoEvidenciaCartaControle.CARGA_DOCA:
-      return 'Carga na doca';
+      return 'Carga em doca';
     case TipoEvidenciaCartaControle.INICIO_CARREGAMENTO:
       return 'Início do carregamento';
     case TipoEvidenciaCartaControle.MEIO_CARREGAMENTO:
