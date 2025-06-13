@@ -14,6 +14,7 @@ import {
 import dayjs from 'dayjs';
 import { CartaControle } from '@/types/carta-controle';
 import { getTipoEvidencia } from '@/utils/get-tipo-evidencia';
+import { getInfosPorOrdem } from '@/utils/get-infos-por-ordem';
 
 const styles = StyleSheet.create({
   page: {
@@ -35,7 +36,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -10,
     left: 0,
-    // backgroundColor: 'red',
   },
   title: {
     fontSize: 18,
@@ -87,9 +87,7 @@ const styles = StyleSheet.create({
     padding: 5,
     textAlign: 'left',
   },
-  imageSection: {
-    // marginBottom: 40,
-  },
+  imageSection: {},
   imageContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -98,25 +96,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   image: {
-    // width: 200,
-    // marginTop: 10,
     width: '48%',
     height: 200,
   },
-  footerText: {
-    fontSize: 10,
-    textAlign: 'center',
-    marginTop: 10,
-  },
 });
 
-// Componente do PDF
 const CartaControleDocument = ({ data }: { data: CartaControle }) => (
   <Document>
     <Page size="A4" style={styles.page}>
-      {/* Logo */}
-      {/* <Image src={`data:image/svg+xml;utf8,${LogoYpe}`} style={styles.logo} /> */}
-
       <View style={[styles.header, { marginBottom: 5 }]}>
         <Image
           src={
@@ -129,23 +116,11 @@ const CartaControleDocument = ({ data }: { data: CartaControle }) => (
             <Text style={styles.title}>QUÍMICA AMPARO - YPÊ</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.subtitle}>CARTA CONTROLE - DEVOLUÇÃO</Text>
+            <Text style={styles.subtitle}>CARTA CONTROLE - EXPEDIÇÃO</Text>
           </View>
         </View>
       </View>
-      {/* ID no título */}
-      {/* <View style={[styles.row, { marginBottom: 20 }]}>
-        <Text style={styles.title}>ID:</Text>
-        <Text style={styles.text}>{data?.id}</Text>
-      </View> */}
-      {/* <View style={[styles.row, { marginBottom: 20 }]}>
-        <Text style={styles.title}>Colaborador:</Text>
-        <Text style={[styles.text, { marginLeft: 10 }]}>
-          {data?.users?.name}
-        </Text>
-      </View> */}
 
-      {/* Tabela de dados */}
       <View style={styles.table}>
         <View style={styles.tableRow}>
           <View style={styles.tableRow}>
@@ -211,7 +186,7 @@ const CartaControleDocument = ({ data }: { data: CartaControle }) => (
       </View>
 
       {data?.evidencias &&
-        data?.evidencias?.map((img: any, index: number) => (
+        getInfosPorOrdem(data?.evidencias)?.map((img: any, index: number) => (
           <View key={index} style={styles.imageSection} break={index > 0}>
             <View style={styles.tableRow}>
               <Text

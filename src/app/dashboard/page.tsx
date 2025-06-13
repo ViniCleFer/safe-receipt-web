@@ -134,6 +134,8 @@ import {
 } from '@/components/ui/drawer';
 import { Label } from '@/components/ui/label';
 import { getTipoEvidencia } from '@/utils/get-tipo-evidencia';
+import LaudoCrmDocument from '@/components/pdf-laudo-crm';
+import { getInfosPorOrdem } from '@/utils/get-infos-por-ordem';
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState('forms-ptp');
@@ -1297,25 +1299,18 @@ function DetalhesLaudoCrmContent({
 
   const handleDownload = async () => {
     if (!laudoCrm) return;
-    // Gerar o PDF com os dados dinâmicos
-    // const blob = await pdf(
-    //   <CartaControleDocument
-    //     logo={logo}
-    //     id={laudoCrm?.id}
-    //     quantidade={laudoCrm?.notaFiscal}
-    //     observacao={laudoCrm?.observacoes}
-    //     dados={laudoCrm}
-    //     imagens={laudoCrm?.evidencias}
-    //   />,
-    // ).toBlob();
 
-    // // Criar link de download
-    // const url = URL.createObjectURL(blob);
-    // const a = document.createElement('a');
-    // a.href = url;
-    // a.download = 'trabalho_abnt.pdf';
-    // a.click();
-    // URL.revokeObjectURL(url);
+    // console.log('laudoCrm', laudoCrm);
+    // Gerar o PDF com os dados dinâmicos
+    const blob = await pdf(<LaudoCrmDocument data={laudoCrm} />).toBlob();
+
+    // Criar link de download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Laudo CRM - NF ${laudoCrm?.notaFiscal}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -2590,7 +2585,7 @@ function DetalhesCartaControleContent({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Carta Controle ${cartaControle?.id?.substring(0, 5)}.pdf`;
+    a.download = `Carta Controle - DT ${cartaControle?.documentoTransporte}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -2685,26 +2680,28 @@ function DetalhesCartaControleContent({
             {/* <div className="flex flex-col w-full gap-4"> */}
             {cartaControle &&
               cartaControle?.evidencias?.length > 0 &&
-              cartaControle?.evidencias?.map((img: any, index) => (
-                <div key={index} className="flex flex-col gap-4 mb-4">
-                  <span className="text-lg font-bold">
-                    {getTipoEvidencia(img?.grupo)}
-                  </span>
-                  <div className="flex flex-row flex-wrap gap-2 mb-3">
-                    {img?.data?.map((imgData: any, indexData: number) => (
-                      <Image
-                        key={indexData}
-                        src={imgData?.url}
-                        alt={`Evidence ${indexData + 1}`}
-                        className="h-50 w-50 object-cover rounded-md border hover:opacity-90 cursor-pointer"
-                        onClick={() => openImagePreview(imgData?.url)}
-                        width={200}
-                        height={200}
-                      />
-                    ))}
+              getInfosPorOrdem(cartaControle?.evidencias)?.map(
+                (img: any, index) => (
+                  <div key={index} className="flex flex-col gap-4 mb-4">
+                    <span className="text-lg font-bold">
+                      {getTipoEvidencia(img?.grupo)}
+                    </span>
+                    <div className="flex flex-row flex-wrap gap-2 mb-3">
+                      {img?.data?.map((imgData: any, indexData: number) => (
+                        <Image
+                          key={indexData}
+                          src={imgData?.url}
+                          alt={`Evidence ${indexData + 1}`}
+                          className="h-50 w-50 object-cover rounded-md border hover:opacity-90 cursor-pointer"
+                          onClick={() => openImagePreview(imgData?.url)}
+                          width={200}
+                          height={200}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ),
+              )}
             {/* </div> */}
           </div>
         </CardContent>
