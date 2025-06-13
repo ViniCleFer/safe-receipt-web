@@ -1,6 +1,6 @@
 export function Quality() {
   return (
-    <div className="w-100 flex flex-row flex-wrap items-center absolute bottom-5 right-[-10] leading-none uppercase">
+    <div className="w-94 flex flex-row flex-wrap items-center absolute bottom-5 right-0 leading-none uppercase">
       <p className="text-[#0870B8] text-sm font-bold ">Cuidado</p>{' '}
       <div className="flex flex-row mx-1">
         <p>/</p>
