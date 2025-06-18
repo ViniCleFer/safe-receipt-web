@@ -78,6 +78,7 @@ export async function createUser(user: any) {
         name: user?.name,
         status: true,
         profile: user?.profile,
+        permissions: user?.permissions,
       },
     },
   });
@@ -120,6 +121,7 @@ export async function updateUser(user: Partial<User>) {
       name: user?.name,
       email: user?.email,
       profile: user?.profile,
+      permissions: user?.permissions,
       status: user?.status,
     })
     .eq('id', user?.id)

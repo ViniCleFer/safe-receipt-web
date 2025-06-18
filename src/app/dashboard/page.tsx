@@ -99,7 +99,7 @@ import { getInitials } from '@/utils/get-iniciais';
 import { LaudoCrm } from '@/types/laudo-crm';
 import { tiposNaoConformidade as tiposNaoConformidadeList } from '@/utils/tiposNaoConformidade';
 import { Divergencia, TipoDivergencia } from '@/types/divergencia';
-import { TipoPerfil, User } from '@/types/user';
+import { Permission, TipoPerfil, User } from '@/types/user';
 import { getTipoPerfil } from '@/utils/get-tipo-perfil';
 import { Switch } from '@/components/ui/switch';
 import { generateExcelFormsPtp } from '@/utils/generate-excel-forms-ptp';
@@ -136,6 +136,8 @@ import { Label } from '@/components/ui/label';
 import { getTipoEvidencia } from '@/utils/get-tipo-evidencia';
 import LaudoCrmDocument from '@/components/pdf-laudo-crm';
 import { getInfosPorOrdem } from '@/utils/get-infos-por-ordem';
+import { getPermissions } from '@/utils/get-permissions';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState('forms-ptp');
@@ -2749,6 +2751,7 @@ function UsersContent() {
     email: '',
     password: '',
     profile: TipoPerfil.MEMBER,
+    permissions: [Permission.MOBILE, Permission.WEB],
     status: false,
   });
   const [isLoading, setIsLoading] = React.useState(false);
@@ -2828,6 +2831,7 @@ function UsersContent() {
       name: user?.name,
       email: user?.email,
       profile: user?.profile,
+      permissions: user?.permissions,
       status: user?.status,
       password: user?.password,
     });
@@ -2876,6 +2880,15 @@ function UsersContent() {
 
   const handleUserCreate = () => {
     setDrawerCreateOpen(true);
+    setDrawerFormData({
+      id: '',
+      name: '',
+      email: '',
+      password: '',
+      profile: TipoPerfil.MEMBER,
+      permissions: [Permission.MOBILE, Permission.WEB],
+      status: false,
+    });
   };
 
   // Handle save changes from drawer
@@ -2939,18 +2952,19 @@ function UsersContent() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="grid grid-cols-6 border-b bg-muted/50 p-3 font-medium">
+            <div className="grid grid-cols-7 border-b bg-muted/50 p-3 font-medium">
               {/* <div>ID</div> */}
               <div>Nome</div>
               <div>E-mail</div>
-              <div>Permissão</div>
+              <div>Perfil</div>
+              <div>Permissões</div>
               <div>Status</div>
               <div>Data Inclusão</div>
               <div className="justify-self-center">Ações</div>
             </div>
             {currentProducts?.length > 0 ? (
               currentProducts?.map((product: User) => (
-                <div key={product.id} className="grid grid-cols-6 border-b p-3">
+                <div key={product.id} className="grid grid-cols-7 border-b p-3">
                   {/* <div>#{product?.id?.substring(0, 8)}</div> */}
                   <div>{product?.name}</div>
                   <div className="truncate text-ellipsis">{product?.email}</div>
@@ -2965,6 +2979,11 @@ function UsersContent() {
                       }
                     >
                       {getTipoPerfil(product?.profile)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Badge variant={'default'} className="capitalize">
+                      {getPermissions(product?.permissions)}
                     </Badge>
                   </div>
                   <div>
@@ -3221,6 +3240,52 @@ function UsersContent() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="drawer-profile">Permissions</Label>
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="mobile"
+                      checked={drawerFormData?.permissions?.includes(
+                        Permission.MOBILE,
+                      )}
+                      onCheckedChange={checked => {
+                        const permission = !checked
+                          ? drawerFormData?.permissions?.filter(
+                              p => p !== Permission.MOBILE,
+                            )
+                          : [Permission.MOBILE, Permission.WEB];
+
+                        setDrawerFormData((prev: any) => ({
+                          ...prev,
+                          permissions: permission,
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="mobile">Mobile</Label>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="web"
+                      checked={drawerFormData?.permissions?.includes(
+                        Permission.WEB,
+                      )}
+                      onCheckedChange={checked => {
+                        const permission = !checked
+                          ? drawerFormData?.permissions?.filter(
+                              p => p !== Permission.WEB,
+                            )
+                          : [Permission.MOBILE, Permission.WEB];
+
+                        setDrawerFormData((prev: any) => ({
+                          ...prev,
+                          permissions: permission,
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="web">Web</Label>
+                  </div>
+                </div>
               </div>
             </div>
             <DrawerFooter>
@@ -3311,6 +3376,52 @@ function UsersContent() {
                       <SelectItem value={TipoPerfil.MEMBER}>Membro</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="drawer-profile">Permissions</Label>
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="mobile"
+                      checked={drawerFormData?.permissions?.includes(
+                        Permission.MOBILE,
+                      )}
+                      onCheckedChange={checked => {
+                        const permission = !checked
+                          ? drawerFormData?.permissions?.filter(
+                              p => p !== Permission.MOBILE,
+                            )
+                          : [Permission.MOBILE, Permission.WEB];
+
+                        setDrawerFormData((prev: any) => ({
+                          ...prev,
+                          permissions: permission,
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="mobile">Mobile</Label>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="web"
+                      checked={drawerFormData?.permissions?.includes(
+                        Permission.WEB,
+                      )}
+                      onCheckedChange={checked => {
+                        const permission = !checked
+                          ? drawerFormData?.permissions?.filter(
+                              p => p !== Permission.WEB,
+                            )
+                          : [Permission.MOBILE, Permission.WEB];
+
+                        setDrawerFormData((prev: any) => ({
+                          ...prev,
+                          permissions: permission,
+                        }));
+                      }}
+                    />
+                    <Label htmlFor="web">Web</Label>
+                  </div>
                 </div>
               </div>
             </div>
