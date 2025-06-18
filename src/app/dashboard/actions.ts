@@ -46,17 +46,25 @@ export async function getAllUsers() {
 export async function getUserByEmail(email: string) {
   const supabase = await createClient();
 
-  const { data, error } = await await supabase
+  const { data, error } = await supabase
     .from('users')
     .select()
-    .eq('email', email);
+    .eq('email', email)
+    .single();
 
   if (error) {
     console.error('Error getUserByEmail', JSON.stringify(error, null, 2));
-    return null;
+    return { data: null, error };
   }
 
-  return data[0];
+  console.log('Success getUserByEmail', JSON.stringify(data, null, 2));
+
+  return { data, error: null };
+}
+
+export async function revalidateDashboard() {
+  revalidatePath('/dashboard', 'layout');
+  redirect('/dashboard');
 }
 
 export async function createUser(user: any) {

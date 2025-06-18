@@ -295,7 +295,7 @@ function DashboardSidebar({
       getUserByEmail(userSupabase.email!)
         .then(data => {
           console.log('data', data);
-          setUser(data);
+          setUser(data?.data);
         })
         .catch(err => console.error('Page Error Get user', err));
     }
@@ -2912,7 +2912,7 @@ function UsersContent() {
         </div>
         <div className="w-full md:w-1/3">
           <Input
-            placeholder="Digite um conferente/técnico, nota fiscal, UP"
+            placeholder="Digite um nome, e-mail ou tipo do perfil"
             value={searchQuery}
             onChange={e => {
               setSearchQuery(e.target.value);

@@ -6,7 +6,11 @@ import { getSession } from './actions';
 export default async function Home() {
   const session = await getSession();
 
-  console.log('session', session);
-
-  return session === null ? <LoginPage /> : <DashboardPage />;
+  return session === null ||
+    session?.user?.user_metadata?.permissions?.length === 0 ||
+    !session?.user?.user_metadata?.permissions?.includes('WEB') ? (
+    <LoginPage />
+  ) : (
+    <DashboardPage />
+  );
 }

@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
+
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ErrorMessage } from '@hookform/error-message';
+import { toast } from 'sonner';
 
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/button';
@@ -10,7 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState } from 'react';
 import { Spinner } from './ui/spinner';
-// import { login } from '@/app/login/actions';
+
+import { getUserByEmail, revalidateDashboard } from '@/app/dashboard/actions';
 
 interface FormData {
   email: string;
@@ -18,7 +22,7 @@ interface FormData {
 }
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<'form'> {
-  signIn: (data: FormData) => Promise<void>;
+  signIn: (data: FormData) => Promise<{ session: any; error: any }>;
   className?: string;
 }
 
@@ -48,7 +52,66 @@ export function LoginForm({ className, signIn, ...props }: LoginFormProps) {
     console.log(data);
     setIsLoading(true);
     try {
-      await signIn(data);
+      const { session, error } = await signIn(data);
+
+      if (error) {
+        setIsLoading(false);
+
+        return toast.error(
+          'Erro ao logar um usuário, por favor tente novamente mais tarde',
+          {
+            position: 'top-center',
+            className: 'bg-red-500 text-white',
+            style: {
+              color: 'white',
+              backgroundColor: 'oklch(0.637 0.237 25.331)',
+            },
+          },
+        );
+      }
+
+      if (session) {
+        const { user } = session;
+
+        const { data: userData, error: userError } = await getUserByEmail(
+          user?.email,
+        );
+
+        if (userError) {
+          setIsLoading(false);
+          return toast.error(
+            'Erro ao buscar um usuário pelo ID, por favor tente novamente mais tarde',
+            {
+              position: 'top-center',
+              className: 'bg-red-500 text-white',
+              style: {
+                color: 'white',
+                backgroundColor: 'oklch(0.637 0.237 25.331)',
+              },
+            },
+          );
+        }
+
+        if (
+          userData?.permissions?.length === 0 ||
+          !userData?.permissions?.includes('WEB')
+        ) {
+          setIsLoading(false);
+          return toast.error(
+            'Você não tem permissão para acessar esta área. Por favor, entre em contato com o administrador do sistema para obter acesso.',
+            {
+              position: 'top-center',
+              className: 'bg-red-500 text-white',
+              style: {
+                color: 'white',
+                backgroundColor: 'oklch(0.637 0.237 25.331)',
+              },
+            },
+          );
+        }
+
+        await revalidateDashboard();
+      }
     } catch (error) {
       console.error('Error logging in', error);
     } finally {

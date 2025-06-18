@@ -20,15 +20,18 @@ export async function signIn(formData: FormData) {
     password: formData.password,
   };
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+  const {
+    error,
+    data: { session },
+  } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
     console.error('Error signing up:', error);
     // redirect('/error');
+    return { error, session: null };
   }
 
-  revalidatePath('/dashboard', 'layout');
-  redirect('/dashboard');
+  return { error: null, session };
 }
 
 export async function signUp(formData: FormData) {
