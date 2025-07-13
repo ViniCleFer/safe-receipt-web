@@ -86,6 +86,7 @@ import {
   getUserByEmail,
   logout,
   updateUser,
+  updateUserStatus,
 } from './actions';
 import { FormPtp } from '@/types/form-ptp';
 import LogoYpe from '@/assets/logo-ype.svg';
@@ -2878,6 +2879,28 @@ function UsersContent() {
     // Here you would implement the actual update logic
   };
 
+  const handleUserStatusChange = async (userId: string, status: boolean) => {
+    setIsLoading(true);
+
+    try {
+      const response = await updateUserStatus(userId, status);
+
+      if (response?.data && response?.status === 200) {
+        const userIndex = allUsers?.findIndex(user => user?.id === userId);
+
+        if (userIndex > -1) {
+          allUsers[userIndex].status = status;
+
+          setAllUsers([...allUsers]);
+        }
+      }
+    } catch (error) {
+      console.log('handleUserStatusChange error', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleUserCreate = () => {
     setDrawerCreateOpen(true);
     setDrawerFormData({
@@ -2988,11 +3011,10 @@ function UsersContent() {
                   </div>
                   <div>
                     <Switch
-                      className=""
+                      className="cursor-pointer"
                       checked={product?.status}
                       onCheckedChange={() => {
-                        console.log('teste');
-                        // adicionar a função de editar status
+                        handleUserStatusChange(product?.id, !product?.status);
                       }}
                     />
                   </div>

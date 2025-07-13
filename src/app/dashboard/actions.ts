@@ -135,6 +135,29 @@ export async function updateUser(user: Partial<User>) {
   return { data, status };
 }
 
+export async function updateUserStatus(userId: string, status: boolean) {
+  const supabase = await createClient();
+
+  const {
+    data,
+    error,
+    status: responseStatus,
+  } = await supabase
+    .from('users')
+    .update({
+      status: status,
+    })
+    .eq('id', userId)
+    .select();
+
+  if (error) {
+    console.error('Error updateUserStatus', JSON.stringify(error, null, 2));
+    return null;
+  }
+
+  return { data, status: responseStatus };
+}
+
 export async function deleteUser(userId: string) {
   const supabase = await createClient();
 
