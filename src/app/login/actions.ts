@@ -52,5 +52,5 @@ export async function signUp(formData: FormData) {
   }
 
   revalidatePath('/dashboard', 'layout');
-  redirect('/dashboard');
+  redirect('/dashboard/forms-ptp');
 }

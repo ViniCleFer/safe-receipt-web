@@ -1,23 +1,28 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-
 import { createClient } from '@/lib/supabase/server';
 
-export async function logout() {
+export async function getDivergencesRequest() {
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signOut();
+  const { data, error, status } = await supabase
+    .from('divergencias')
+    .select()
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error logging out', error);
-    // redirect('/error');
+    console.error(
+      'Error getDivergencesRequest',
+      JSON.stringify(error, null, 2),
+    );
     return null;
   }
 
-  console.log('Logged out successfully');
+  return { data, status };
+}
 
-  revalidatePath('/login', 'layout');
-  redirect('/login');
+export async function generateExcelDivergencias() {
+  // Implementar lógica de geração de Excel
+  console.log('Generating Excel for Divergencias');
+  return true;
 }
