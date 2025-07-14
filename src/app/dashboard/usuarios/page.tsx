@@ -275,7 +275,10 @@ export default function UsuariosPage() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="grid grid-cols-6 border-b bg-muted/50 p-3 font-medium">
+            <div
+              className="grid border-b bg-muted/50 p-3 font-medium"
+              style={{ gridTemplateColumns: '25% 30% 10% 15% 10% 10%' }}
+            >
               <div>Nome</div>
               <div>Email</div>
               <div>Perfil</div>
@@ -285,7 +288,11 @@ export default function UsuariosPage() {
             </div>
             {currentProducts?.length > 0 ? (
               currentProducts?.map((user: User) => (
-                <div key={user.id} className="grid grid-cols-6 border-b p-2">
+                <div
+                  key={user.id}
+                  className="grid border-b p-2"
+                  style={{ gridTemplateColumns: '25% 30% 10% 15% 10% 10%' }}
+                >
                   <div className="flex-wrap break-words p-1">{user?.name}</div>
                   <div className="flex-wrap break-words p-1">{user?.email}</div>
                   <div className="flex-wrap break-words p-1">

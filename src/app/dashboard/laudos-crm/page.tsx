@@ -240,7 +240,10 @@ export default function LaudosCrmPage() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="grid grid-cols-8 border-b bg-muted/50 p-3 font-medium">
+            <div
+              className="grid border-b bg-muted/50 p-3 font-medium"
+              style={{ gridTemplateColumns: '16% 18% 16% 10% 10% 10% 10% 10%' }}
+            >
               <div>Nota Fiscal/DT</div>
               <div>Transportador</div>
               <div>Remessa</div>
@@ -252,7 +255,13 @@ export default function LaudosCrmPage() {
             </div>
             {currentProducts?.length > 0 ? (
               currentProducts?.map((product: LaudoCrm) => (
-                <div key={product.id} className="grid grid-cols-8 border-b p-2">
+                <div
+                  key={product.id}
+                  className="grid border-b p-2"
+                  style={{
+                    gridTemplateColumns: '16% 18% 16% 10% 10% 10% 10% 10%',
+                  }}
+                >
                   <div className="flex-wrap break-words p-1">
                     {product?.notaFiscal}
                   </div>

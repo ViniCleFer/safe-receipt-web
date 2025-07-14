@@ -180,28 +180,49 @@ export default function CartasControlePage() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <div className="grid grid-cols-7 border-b bg-muted/50 p-3 font-medium">
-              <div>Conferente</div>
+            <div
+              className="grid border-b bg-muted/50 p-3 font-medium"
+              style={{ gridTemplateColumns: '20% 10% 15% 15% 10% 10% 10% 10%' }}
+            >
+              {/* <div>ID</div> */}
+              <div>Conferente/Técnico</div>
               <div>Turno</div>
-              <div>Documento Transporte</div>
               <div>Remessa</div>
+              <div>Doc. Transporte (DT)</div>
+              <div>Doca</div>
+              <div>Capacidade Veículo</div>
               <div>Data Recebimento</div>
-              <div>Status</div>
               <div className="justify-self-center">Ações</div>
             </div>
             {currentProducts?.length > 0 ? (
               currentProducts?.map((product: CartaControle) => (
-                <div key={product.id} className="grid grid-cols-8 border-b p-3">
+                <div
+                  key={product.id}
+                  className="grid border-b p-2"
+                  style={{
+                    gridTemplateColumns: '20% 10% 15% 15% 10% 10% 10% 10%',
+                  }}
+                >
                   {/* <div>#{product?.id?.substring(0, 8)}</div> */}
-                  <div>{product?.conferente}</div>
-                  <div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.conferente}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
                     {listaTurnos.find(t => t.value === product.turno)?.label}
                   </div>
-                  <div>{product?.remessa}</div>
-                  <div>{product?.documentoTransporte}</div>
-                  <div>{product?.doca}</div>
-                  <div>{product?.capacidadeVeiculo}</div>
-                  <div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.remessa}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.documentoTransporte}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.doca}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
+                    {product?.capacidadeVeiculo}
+                  </div>
+                  <div className="flex-wrap break-words p-1">
                     {dayjs(product?.dataIdentificacao).format('DD/MM/YYYY')}
                   </div>
                   <div className="flex space-x-2 justify-self-center">
@@ -247,12 +268,11 @@ export default function CartasControlePage() {
               ))
             ) : (
               <div className="p-4 text-center text-muted-foreground">
-                Nenhuma Carta Controle encontrada
+                Nenhuma carta controle encontrada
               </div>
             )}
           </div>
 
-          {/* Pagination */}
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <p className="text-sm text-muted-foreground">Itens por página</p>
@@ -297,6 +317,7 @@ export default function CartasControlePage() {
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   let pageNumber;
 
+                  // Logic to show pages around current page
                   if (totalPages <= 5) {
                     pageNumber = i + 1;
                   } else if (currentPage <= 3) {
