@@ -52,6 +52,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { TipoPerfil, Permission, User } from '@/types/user';
+import { PermissionCheckboxGroup } from '@/components/ui/permission-checkbox-group';
 
 export default function UsuariosPage() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -204,6 +205,15 @@ export default function UsuariosPage() {
       console.log('handleUserStatusChange error', error);
     } finally {
       setIsLoading(false);
+      setDrawerFormData({
+        id: '',
+        name: '',
+        email: '',
+        password: '',
+        profile: TipoPerfil.MEMBER,
+        permissions: [Permission.MOBILE, Permission.WEB],
+        status: false,
+      });
     }
   };
 
@@ -320,10 +330,12 @@ export default function UsuariosPage() {
                   <div className="p-1">
                     <Switch
                       checked={user?.status}
-                      onCheckedChange={checked =>
-                        handleUserStatusChange(user.id, checked)
-                      }
-                      disabled={isLoading}
+                      onCheckedChange={checked => {
+                        setDrawerFormData({ ...user });
+                        handleUserStatusChange(user.id, checked);
+                      }}
+                      disabled={isLoading && user?.id === drawerFormData?.id}
+                      className="cursor-pointer"
                     />
                   </div>
                   <div className="flex space-x-2 justify-self-center">
@@ -516,7 +528,7 @@ export default function UsuariosPage() {
             <DrawerTitle>Editar Usuário</DrawerTitle>
           </DrawerHeader>
           <div className="p-4 space-y-4">
-            <div>
+            <div className="space-y-2 w-full">
               <Label htmlFor="name">Nome</Label>
               <Input
                 id="name"
@@ -525,7 +537,7 @@ export default function UsuariosPage() {
                 onChange={handleDrawerInputChange}
               />
             </div>
-            <div>
+            <div className="space-y-2 w-full">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -535,7 +547,7 @@ export default function UsuariosPage() {
                 onChange={handleDrawerInputChange}
               />
             </div>
-            <div>
+            <div className="space-y-2 w-full">
               <Label htmlFor="profile">Perfil</Label>
               <Select
                 value={drawerFormData.profile}
@@ -546,7 +558,7 @@ export default function UsuariosPage() {
                   }))
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -554,6 +566,18 @@ export default function UsuariosPage() {
                   <SelectItem value={TipoPerfil.MEMBER}>Membro</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2 w-full">
+              <Label htmlFor="permissions">Permissões</Label>
+              <PermissionCheckboxGroup
+                value={drawerFormData.permissions}
+                onChange={value =>
+                  setDrawerFormData(prev => ({
+                    ...prev,
+                    permissions: value,
+                  }))
+                }
+              />
             </div>
           </div>
           <DrawerFooter>
@@ -578,7 +602,7 @@ export default function UsuariosPage() {
             <DrawerTitle>Criar Usuário</DrawerTitle>
           </DrawerHeader>
           <div className="p-4 space-y-4">
-            <div>
+            <div className="space-y-2 w-full">
               <Label htmlFor="name">Nome</Label>
               <Input
                 id="name"
@@ -587,7 +611,7 @@ export default function UsuariosPage() {
                 onChange={handleDrawerInputChange}
               />
             </div>
-            <div>
+            <div className="space-y-2 w-full">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -597,7 +621,7 @@ export default function UsuariosPage() {
                 onChange={handleDrawerInputChange}
               />
             </div>
-            <div>
+            <div className="space-y-2 w-full">
               <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
@@ -607,7 +631,7 @@ export default function UsuariosPage() {
                 onChange={handleDrawerInputChange}
               />
             </div>
-            <div>
+            <div className="space-y-2 w-full">
               <Label htmlFor="profile">Perfil</Label>
               <Select
                 value={drawerFormData.profile}
@@ -618,7 +642,7 @@ export default function UsuariosPage() {
                   }))
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -626,6 +650,19 @@ export default function UsuariosPage() {
                   <SelectItem value={TipoPerfil.MEMBER}>Membro</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2 w-full">
+              <Label htmlFor="permissions">Permissões</Label>
+              <PermissionCheckboxGroup
+                value={drawerFormData.permissions}
+                onChange={value =>
+                  setDrawerFormData(prev => ({
+                    ...prev,
+                    permissions: value,
+                  }))
+                }
+                orientation="horizontal"
+              />
             </div>
           </div>
           <DrawerFooter>
