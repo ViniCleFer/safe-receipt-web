@@ -216,6 +216,37 @@ const LaudoCrmDocument = ({ data }: { data: LaudoCrm }) => (
         <View style={styles.tableRow}>
           <View style={styles.tableRow}>
             <Text style={[styles.row, styles.tableHeader, styles.text]}>
+              Lotes:
+            </Text>
+            <Text style={[styles.row, styles.text]}>{data?.lotes}</Text>
+          </View>
+        </View>
+
+        <View style={styles.tableRow}>
+          <View style={styles.tableRow}>
+            <Text style={[styles.row, styles.tableHeader, styles.text]}>
+              Códigos dos Produtos:
+            </Text>
+            <Text style={[styles.row, styles.text]}>
+              {data?.codigoProdutos}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.tableRow}>
+          <View style={styles.tableRow}>
+            <Text style={[styles.row, styles.tableHeader, styles.text]}>
+              Quantidade de Caixas Não Conformes:
+            </Text>
+            <Text style={[styles.row, styles.text]}>
+              {data?.qtdCaixasNaoConformes}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.tableRow}>
+          <View style={styles.tableRow}>
+            <Text style={[styles.row, styles.tableHeader, styles.text]}>
               Observações:
             </Text>
             <Text style={[styles.row, styles.text]}>{data?.observacoes}</Text>

@@ -40,7 +40,6 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { LaudoCrm } from '@/types/laudo-crm';
-import { tiposNaoConformidade as tiposNaoConformidadeList } from '@/utils/tiposNaoConformidade';
 import { generateExcelLaudosCrm } from '@/utils/generate-excel-laudos-crm';
 
 export default function LaudosCrmPage() {
@@ -72,54 +71,12 @@ export default function LaudosCrmPage() {
           }
 
           const tiposNaoConformidadeFormatted = laudosCrm.map((laudo: any) => {
-            const tiposNaoConformidade = laudo?.tiposNaoConformidade;
-            const lotes = laudo?.lotes;
-            const codigosProdutos = laudo?.codigoProdutos;
             const turno = getTurno(laudo?.turno);
-
-            let tiposNaoConformidadeFormatted = '';
-
-            if (tiposNaoConformidade?.length > 0) {
-              tiposNaoConformidadeFormatted = tiposNaoConformidade
-                .map(
-                  (tipo: string) =>
-                    '- ' +
-                    tiposNaoConformidadeList?.find(
-                      (item: any) => item?.value === tipo,
-                    )?.label,
-                )
-                .join('\n');
-            } else {
-              tiposNaoConformidadeFormatted = 'Sem tipos de não conformidade';
-            }
-
-            let lotesFormatted = '';
-
-            if (lotes?.length > 0) {
-              lotesFormatted = lotes
-                .map((lote: string) => '- ' + lote)
-                .join('\n');
-            } else {
-              lotesFormatted = 'Sem lotes cadastrados';
-            }
-
-            let codigosProdutosFormatted = '';
-
-            if (codigosProdutos?.length > 0) {
-              codigosProdutosFormatted = codigosProdutos
-                .map((codigoProduto: string) => '- ' + codigoProduto)
-                .join('\n');
-            } else {
-              codigosProdutosFormatted = 'Sem códigos de produtos cadastrados';
-            }
 
             return {
               ...laudo,
               turno,
               observacoes: laudo?.observacoes || 'Sem observações',
-              tiposNaoConformidade: tiposNaoConformidadeFormatted,
-              lotes: lotesFormatted,
-              codigosProdutos: codigosProdutosFormatted,
             };
           });
 

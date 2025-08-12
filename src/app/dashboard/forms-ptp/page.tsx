@@ -41,9 +41,8 @@ export default function FormsPtpPage() {
   useEffect(() => {
     getAllFormsPtp()
       .then(data => {
-        console.log('teste', data?.data);
-        const ok = data !== null ? data?.data : [];
-        setAllProducts([...ok]);
+        const response = data !== null ? data?.data : [];
+        setAllProducts([...response]);
       })
       .catch(err => {
         console.log('erro', err);
@@ -154,7 +153,10 @@ export default function FormsPtpPage() {
             </div>
             {currentProducts?.length > 0 ? (
               currentProducts?.map((product: FormPtp) => (
-                <div key={product.id} className="grid grid-cols-6 border-b p-3">
+                <div
+                  key={product?.id}
+                  className="grid grid-cols-6 border-b p-3"
+                >
                   <div>{product?.conferente}</div>
                   <div>{product?.notaFiscal ? product?.notaFiscal : 'N/A'}</div>
                   <div>{product?.opcaoUp ? product?.opcaoUp : 'N/A'}</div>

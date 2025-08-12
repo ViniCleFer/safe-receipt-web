@@ -6,8 +6,9 @@ import { ChevronLeft, X } from 'lucide-react';
 import dayjs from 'dayjs';
 import Image from 'next/image';
 import { pdf } from '@react-pdf/renderer';
+
 import { getLaudosCrmByIdRequest } from '../actions';
-import { listaUPsOrigem, listaCDsOrigem } from '@/utils/listaUPs';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -24,7 +25,10 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import LaudoCrmDocument from '@/components/pdf-laudo-crm';
+
 import { LaudoCrm } from '@/types/laudo-crm';
+
+import { getTurno } from '@/utils/get-turno';
 
 export default function LaudoCrmDetailsPage() {
   const params = useParams();
@@ -40,8 +44,6 @@ export default function LaudoCrmDetailsPage() {
     if (laudoCrmId) {
       getLaudosCrmByIdRequest(laudoCrmId)
         .then(response => {
-          console.log('response getLaudosCrmByIdRequest', response);
-
           if (response?.status === 200 && response?.data?.length > 0) {
             const data = response?.data[0];
             setLaudoCrm(data);
@@ -61,10 +63,8 @@ export default function LaudoCrmDetailsPage() {
   const handleDownload = async () => {
     if (!laudoCrm) return;
 
-    // Gerar o PDF com os dados dinâmicos
     const blob = await pdf(<LaudoCrmDocument data={laudoCrm} />).toBlob();
 
-    // Criar link de download
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -149,31 +149,44 @@ export default function LaudoCrmDetailsPage() {
                 <p className="font-medium text-muted-foreground">Remessa</p>
                 <p>{laudoCrm?.remessa}</p>
               </div>
-            </div>
-            <div className="flex w-[50%] flex-col gap-3 text-sm">
               <div>
                 <p className="font-medium text-muted-foreground">Conferente</p>
                 <p>{laudoCrm?.conferente}</p>
               </div>
+            </div>
+            <div className="flex w-[50%] flex-col gap-3 text-sm">
               <div>
                 <p className="font-medium text-muted-foreground">UP Origem</p>
-                <p>
-                  {
-                    listaUPsOrigem?.find(up => up?.value === laudoCrm?.upOrigem)
-                      ?.label
-                  }
-                </p>
+                <p>{laudoCrm?.upOrigem}</p>
               </div>
               <div>
                 <p className="font-medium text-muted-foreground">CD Origem</p>
-                <p>
-                  {
-                    listaCDsOrigem?.find(up => up?.value === laudoCrm?.cdOrigem)
-                      ?.label
-                  }
-                </p>
+                <p>{laudoCrm?.cdOrigem}</p>
+              </div>
+              <div>
+                <p className="font-medium text-muted-foreground">Turno</p>
+                <p>{getTurno(laudoCrm?.turno)}</p>
               </div>
             </div>
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground mb-1">Lotes</p>
+            <p className="text-sm">{laudoCrm?.lotes}</p>
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground mb-1">
+              Códigos dos Produtos
+            </p>
+            <p className="text-sm">{laudoCrm?.codigoProdutos}</p>
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground mb-1">
+              Quantidade de Caixas Não Conformes
+            </p>
+            <p className="text-sm">{laudoCrm?.qtdCaixasNaoConformes}</p>
           </div>
 
           <div>

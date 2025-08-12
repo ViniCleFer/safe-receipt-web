@@ -59,6 +59,9 @@ export interface LaudoCrm {
   tiposNaoConformidade: TipoNaoConformidade[];
   observacoes: string;
   evidencias: string[];
+  lotes?: string[];
+  codigoProdutos?: string[];
+  qtdCaixasNaoConformes?: string[];
   created_at: Date;
   updated_at: Date;
   canceled_at: Date | null;

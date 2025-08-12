@@ -148,7 +148,7 @@ export async function getLaudosCrmByIdRequest(laudoCrmId: string) {
           observacoes: laudo?.observacoes || 'Sem observações',
           tiposNaoConformidade: tiposNaoConformidadeFormatted,
           lotes: lotesFormatted,
-          codigosProdutos: codigosProdutosFormatted,
+          codigoProdutos: codigosProdutosFormatted,
           qtdCaixasNaoConformes: qtdCaixasNaoConformesFormatted,
         };
       });
