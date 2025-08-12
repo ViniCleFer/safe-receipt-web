@@ -17,12 +17,6 @@ export async function getAllFormsPtp() {
   return { data, count, status };
 }
 
-export async function generateExcelFormsPtp() {
-  // Implementar lógica de geração de Excel
-  console.log('Generating Excel for Forms PTP');
-  return true;
-}
-
 export async function getFormPtpById(id: string) {
   const supabase = await createClient();
 

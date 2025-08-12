@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Sheet } from 'lucide-react';
-import { getDivergencesRequest, generateExcelDivergencias } from './actions';
+import { getDivergencesRequest } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -27,6 +27,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { Divergencia, TipoDivergencia } from '@/types/divergencia';
+import { generateExcelDivergencias } from '@/utils/generate-excel-divergencias';
 
 export default function DivergenciasPage() {
   const [allProductsFalta, setAllProductsFalta] = useState<Divergencia[]>([]);
@@ -48,7 +49,6 @@ export default function DivergenciasPage() {
   useEffect(() => {
     getDivergencesRequest()
       .then(data => {
-        console.log('teste', data?.data);
         const ok = data !== null ? data?.data : [];
         setAllProductsFalta([
           ...ok?.filter(

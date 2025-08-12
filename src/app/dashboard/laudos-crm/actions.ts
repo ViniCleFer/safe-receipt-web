@@ -26,12 +26,6 @@ export async function getLaudosCrmRequest() {
   return { data, status };
 }
 
-export async function generateExcelLaudosCrm() {
-  // Implementar lógica de geração de Excel
-  console.log('Generating Excel for Laudos CRM');
-  return true;
-}
-
 export async function getLaudosCrmByIdRequest(laudoCrmId: string) {
   const supabase = await createClient();
 

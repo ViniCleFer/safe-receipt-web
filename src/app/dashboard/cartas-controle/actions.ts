@@ -23,12 +23,6 @@ export async function getCartasControleRequest() {
   return { data, status };
 }
 
-export async function generateExcelCartasControle() {
-  // Implementar lógica de geração de Excel
-  console.log('Generating Excel for Cartas Controle');
-  return true;
-}
-
 export async function getCartasControleByIdRequest(cartaControleId: string) {
   const supabase = await createClient();
 

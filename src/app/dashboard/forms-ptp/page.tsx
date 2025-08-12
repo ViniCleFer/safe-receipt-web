@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Sheet } from 'lucide-react';
 import dayjs from 'dayjs';
-import { getAllFormsPtp, generateExcelFormsPtp } from './actions';
+import { getAllFormsPtp } from './actions';
 import { getTipoEspecificacao } from '@/utils/get-tipo-especificacao';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { FormPtp } from '@/types/form-ptp';
+import { generateExcelFormsPtp } from '@/utils/generate-excel-forms-ptp';
 
 export default function FormsPtpPage() {
   const [allProducts, setAllProducts] = useState<FormPtp[]>([]);

@@ -5,10 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Sheet, Eye, Trash2 } from 'lucide-react';
 import dayjs from 'dayjs';
-import {
-  getCartasControleRequest,
-  generateExcelCartasControle,
-} from './actions';
+import { getCartasControleRequest } from './actions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -42,6 +39,7 @@ import {
 } from '@/components/ui/tooltip';
 import { CartaControle } from '@/types/carta-controle';
 import { listaTurnos } from '@/utils/listaTurnos';
+import { generateExcelCartasControle } from '@/utils/generate-excel-cartas-controle';
 
 export default function CartasControlePage() {
   const router = useRouter();
@@ -123,7 +121,6 @@ export default function CartasControlePage() {
 
   // Handle actual deletion
   const handleConfirmDelete = () => {
-    console.log(`Deleting product: ${productToDelete?.id}`);
     setDeleteDialogOpen(false);
     setProductToDelete(null);
   };

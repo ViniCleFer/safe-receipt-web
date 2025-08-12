@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Sheet, Eye, Trash2 } from 'lucide-react';
 import dayjs from 'dayjs';
-import { getLaudosCrmRequest, generateExcelLaudosCrm } from './actions';
+import { getLaudosCrmRequest } from './actions';
 import { getTurno } from '@/utils/get-turno';
 
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/tooltip';
 import { LaudoCrm } from '@/types/laudo-crm';
 import { tiposNaoConformidade as tiposNaoConformidadeList } from '@/utils/tiposNaoConformidade';
+import { generateExcelLaudosCrm } from '@/utils/generate-excel-laudos-crm';
 
 export default function LaudosCrmPage() {
   const router = useRouter();

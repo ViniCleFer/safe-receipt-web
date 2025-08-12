@@ -20,9 +20,3 @@ export async function getDivergencesRequest() {
 
   return { data, status };
 }
-
-export async function generateExcelDivergencias() {
-  // Implementar lógica de geração de Excel
-  console.log('Generating Excel for Divergencias');
-  return true;
-}
