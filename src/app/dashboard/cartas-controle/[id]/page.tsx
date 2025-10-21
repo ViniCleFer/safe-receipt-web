@@ -69,7 +69,7 @@ export default function CartaControleDetailsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `carta-controle-${cartaControle.remessa}-${dayjs(
+    a.download = `DT ${cartaControle.documentoTransporte} ${dayjs(
       cartaControle.dataIdentificacao,
     ).format('DD-MM-YYYY')}.pdf`;
     document.body.appendChild(a);
