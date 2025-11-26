@@ -67,36 +67,6 @@ export async function revalidateDashboard() {
   redirect('/dashboard');
 }
 
-export async function createUser(user: any) {
-  const supabase = await createClient();
-
-  const { error } = await supabase.auth.signUp({
-    email: user.email!,
-    password: user.password!,
-    options: {
-      data: {
-        name: user?.name,
-        status: true,
-        profile: user?.profile,
-        permissions: user?.permissions,
-      },
-    },
-  });
-
-  if (error) {
-    console.error('Error createUser', JSON.stringify(error, null, 2));
-    return null;
-  }
-
-  const response = await getAllUsers();
-
-  return {
-    data: response?.data,
-    status: response?.status,
-    count: response?.count,
-  };
-}
-
 export async function updateUser(user: Partial<User>) {
   const supabase = await createClient();
 

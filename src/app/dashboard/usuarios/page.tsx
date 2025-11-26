@@ -666,11 +666,20 @@ export default function UsuariosPage() {
             </div>
           </div>
           <DrawerFooter>
-            <Button onClick={handleSaveUser} disabled={isLoading}>
-              {isLoading ? <Spinner size="small" /> : 'Criar'}
+            <Button
+              onClick={handleSaveUser}
+              disabled={isLoading}
+              className="cursor-pointer"
+            >
+              {isLoading ? (
+                <Spinner size="small" className=" text-white" />
+              ) : (
+                'Cadastrar'
+              )}
             </Button>
             <Button
               variant="outline"
+              className="cursor-pointer"
               onClick={() => setDrawerCreateOpen(false)}
             >
               Cancelar
