@@ -23,7 +23,9 @@ export async function getAllUsers() {
 export async function createUser(user: any) {
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signUp({
+  console.log('createUser', user);
+
+  const { data, error } = await supabase.auth.signUp({
     email: user.email!,
     password: user.password!,
     options: {
@@ -32,9 +34,12 @@ export async function createUser(user: any) {
         status: true,
         profile: user?.profile,
         permissions: user?.permissions,
+        avatarUrl: null,
       },
     },
   });
+
+  console.log('createUser DATA', data);
 
   if (error) {
     console.error('Error createUser', JSON.stringify(error, null, 2));
